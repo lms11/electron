@@ -27,6 +27,10 @@
 #include "third_party/blink/renderer/core/execution_context/execution_context.h"  // nogncheck
 #include "third_party/blink/renderer/core/frame/web_local_frame_impl.h"  // nogncheck
 
+#if BUILDFLAG(IS_LINUX)
+#include "components/crash/core/app/crashpad.h"
+#endif
+
 namespace electron {
 
 ElectronRendererClient::ElectronRendererClient()
@@ -255,14 +259,10 @@ void ElectronRendererClient::SetUpWebAssemblyTrapHandler() {
     return;
   }
 
-  const bool use_v8_default_handler =
 #if defined(ENABLE_WEB_ASSEMBLY_TRAP_HANDLER_LINUX)
+  const bool use_v8_default_handler =
       base::CommandLine::ForCurrentProcess()->HasSwitch(
-          switches::kDisableInProcessStackTraces)
-#else
-      true
-#endif  // defined(ENABLE_WEB_ASSEMBLY_TRAP_HANDLER_LINUX)
-      ;
+          switches::kDisableInProcessStackTraces);
 
   if (use_v8_default_handler) {
     // There is no signal handler yet, but it's okay if v8 registers one.
@@ -270,7 +270,6 @@ void ElectronRendererClient::SetUpWebAssemblyTrapHandler() {
     return;
   }
 
-#if defined(ENABLE_WEB_ASSEMBLY_TRAP_HANDLER_LINUX)
   if (base::debug::SetStackDumpFirstChanceCallback(
           v8::TryHandleWebAssemblyTrapPosix)) {
     // Crashpad and Breakpad are disabled, but the in-process stack dump
