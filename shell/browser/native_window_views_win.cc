@@ -573,13 +573,27 @@ void NativeWindowViews::UpdateWindowAccentColor() {
   if (base::win::GetVersion() < base::win::Version::WIN11)
     return;
 
-  // Chromium correctly updates accent color for framed windows.
-  if (has_frame() || !IsAccentColorOnTitleBarsEnabled())
+  if (!IsAccentColorOnTitleBarsEnabled())
     return;
 
-  DWORD accent_color = GetAccentColor();
-  COLORREF border_color = RGB(GetRValue(accent_color), GetGValue(accent_color),
-                              GetBValue(accent_color));
+  COLORREF border_color;
+  if (std::holds_alternative<bool>(accent_color_)) {
+    // Don't set accent color if the user has disabled it.
+    if (!std::get<bool>(accent_color_))
+      return;
+
+    std::optional<DWORD> accent_color = GetAccentColor();
+    if (!accent_color.has_value())
+      return;
+
+    border_color =
+        RGB(GetRValue(accent_color.value()), GetGValue(accent_color.value()),
+            GetBValue(accent_color.value()));
+  } else {
+    SkColor color = std::get<SkColor>(accent_color_);
+    border_color =
+        RGB(SkColorGetR(color), SkColorGetG(color), SkColorGetB(color));
+  }
 
   SetWindowBorderAndCaptionColor(GetAcceleratedWidget(), border_color);
 }
