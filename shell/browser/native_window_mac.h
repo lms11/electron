@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#include <list>
 #include <memory>
 #include <optional>
 #include <string>
@@ -251,6 +252,8 @@ class NativeWindowMac : public NativeWindow,
 
   // The views::View that fills the client area.
   std::unique_ptr<RootViewMac> root_view_;
+
+  std::list<NativeWindowMac*> child_windows_;
 
   bool fullscreen_before_kiosk_ = false;
   bool is_kiosk_ = false;

@@ -586,7 +586,7 @@ bool NativeWindowMac::HandleDeferredClose() {
 }
 
 void NativeWindowMac::RemoveChildWindow(NativeWindow* child) {
-  child_windows_.remove_if([&child](NativeWindow* w) { return (w == child); });
+  std::erase(child_windows_, child);
 
   [window_ removeChildWindow:child->GetNativeWindow().GetNativeNSWindow()];
 }
@@ -600,7 +600,7 @@ void NativeWindowMac::RemoveChildFromParentWindow() {
 
 void NativeWindowMac::AttachChildren() {
   for (auto* child : child_windows_) {
-    if (!static_cast<NativeWindowMac*>(child)->wants_to_be_visible())
+    if (!child->wants_to_be_visible())
       continue;
 
     auto* child_nswindow = child->GetNativeWindow().GetNativeNSWindow();
@@ -1814,7 +1814,7 @@ void NativeWindowMac::InternalSetParentWindow(NativeWindow* new_parent,
 
   // Set new parent window.
   if (new_parent) {
-    new_parent->add_child_window(this);
+    new_parent->emplace_back(this);
     if (attach)
       new_parent->AttachChildren();
   }

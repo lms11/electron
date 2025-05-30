@@ -407,10 +407,6 @@ class NativeWindow : public base::SupportsUserData,
 
   [[nodiscard]] constexpr int32_t window_id() const { return window_id_; }
 
-  void add_child_window(NativeWindow* child) {
-    child_windows_.push_back(child);
-  }
-
   int NonClientHitTest(const gfx::Point& point);
   void AddDraggableRegionProvider(DraggableRegionProvider* provider);
   void RemoveDraggableRegionProvider(DraggableRegionProvider* provider);
@@ -471,8 +467,6 @@ class NativeWindow : public base::SupportsUserData,
   // constraints because converting between them will cause rounding errors
   // on HiDPI displays on some environments.
   std::optional<extensions::SizeConstraints> content_size_constraints_;
-
-  std::list<NativeWindow*> child_windows_;
 
  private:
   static bool PlatformHasClientFrame();
