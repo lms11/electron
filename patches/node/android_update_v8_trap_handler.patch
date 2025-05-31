@@ -1,0 +1,59 @@
+From d99e8966ad67363496f20ba4d5fd030f68957179 Mon Sep 17 00:00:00 2001
+From: Shivram Khandeparker <shivramk@gmail.com>
+Date: Mon, 26 May 2025 17:36:12 +0000
+Subject: [PATCH 15/58] android: update trap-handler patch for V8 changes
+
+Update the trap-handler.h patch to reflect current V8 trap handler
+logic and properly disable trap handling for Android builds.
+---
+ android-patches/trap-handler.h.patch | 37 ++++++++++------------------
+ 1 file changed, 13 insertions(+), 24 deletions(-)
+
+diff --git a/android-patches/trap-handler.h.patch b/android-patches/trap-handler.h.patch
+index f4f151f652..1d7494923d 100644
+--- a/android-patches/trap-handler.h.patch
++++ b/android-patches/trap-handler.h.patch
+@@ -1,26 +1,15 @@
+---- trap-handler.h	2022-08-11 09:01:23.384000000 +0800
+-+++ fixed-trap-handler.h	2022-08-11 09:09:15.352000000 +0800
+-@@ -17,23 +17,7 @@
+- namespace internal {
+- namespace trap_handler {
++--- trap-handler.h.orig	2025-05-26 17:33:44.744764075 +0000
+++++ trap-handler.h.new	2025-05-26 17:33:44.748764133 +0000
++@@ -15,8 +15,11 @@
+  
+--// X64 on Linux, Windows, MacOS, FreeBSD.
+--#if V8_HOST_ARCH_X64 && V8_TARGET_ARCH_X64 &&                        \
+--    ((V8_OS_LINUX && !V8_OS_ANDROID) || V8_OS_WIN || V8_OS_DARWIN || \
+--     V8_OS_FREEBSD)
+--#define V8_TRAP_HANDLER_SUPPORTED true
+--// Arm64 (non-simulator) on Mac.
+--#elif V8_TARGET_ARCH_ARM64 && V8_HOST_ARCH_ARM64 && V8_OS_DARWIN
+--#define V8_TRAP_HANDLER_SUPPORTED true
+--// Arm64 simulator on x64 on Linux, Mac, or Windows.
+--#elif V8_TARGET_ARCH_ARM64 && V8_HOST_ARCH_X64 && \
+--    (V8_OS_LINUX || V8_OS_DARWIN)
+--#define V8_TRAP_HANDLER_VIA_SIMULATOR
+--#define V8_TRAP_HANDLER_SUPPORTED true
+--// Everything else is unsupported.
+--#else
+- #define V8_TRAP_HANDLER_SUPPORTED false
+--#endif
++ namespace v8::internal::trap_handler {
+  
+- // Setup for shared library export.
+- #if defined(BUILDING_V8_SHARED) && defined(V8_OS_WIN)
+\ No newline at end of file
+++// Android doesn't support trap handler for security reasons
+++#if V8_TARGET_OS_ANDROID
+++#define V8_TRAP_HANDLER_SUPPORTED false
++ // X64 on Linux, Windows, MacOS, FreeBSD.
++-#if V8_HOST_ARCH_X64 && V8_TARGET_ARCH_X64 &&                        \
+++#elif V8_HOST_ARCH_X64 && V8_TARGET_ARCH_X64 &&                        \
++     ((V8_OS_LINUX && !V8_OS_ANDROID) || V8_OS_WIN || V8_OS_DARWIN || \
++      V8_OS_FREEBSD)
++ #define V8_TRAP_HANDLER_SUPPORTED true
+-- 
+2.39.5 (Apple Git-154)
+

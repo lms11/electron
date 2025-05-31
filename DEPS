@@ -67,9 +67,9 @@ vars = {
   'build_with_chromium':
     True,
   'checkout_android':
-    False,
+    True,
   'checkout_android_native_support':
-    False,
+    True,
   'checkout_clang_tidy':
     True,
 }

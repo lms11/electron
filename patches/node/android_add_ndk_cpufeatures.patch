@@ -1,0 +1,74 @@
+From a3d75c81af04cdc22b92e4b078475e4892dedded Mon Sep 17 00:00:00 2001
+From: Shivram Khandeparker <shivramk@gmail.com>
+Date: Mon, 26 May 2025 17:41:44 +0000
+Subject: [PATCH 16/58] build: add Android NDK cpufeatures support to zlib
+
+---
+ deps/zlib/zlib.gyp | 44 ++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 44 insertions(+)
+
+diff --git a/deps/zlib/zlib.gyp b/deps/zlib/zlib.gyp
+index dcf6bdb67f..4896538883 100644
+--- a/deps/zlib/zlib.gyp
++++ b/deps/zlib/zlib.gyp
+@@ -111,6 +111,43 @@
+             }],
+           ],
+         }, # zlib_arm_crc32
++        {
++          'target_name': 'android_cpufeatures',
++          'type': 'static_library',
++          'conditions': [
++            ['OS=="android"', {
++              'actions': [
++                {
++                  'action_name': 'copy_cpufeatures',
++                  'inputs': [],
++                  'outputs': [
++                    '<(INTERMEDIATE_DIR)/android_cpufeatures/cpu-features.c',
++                    '<(INTERMEDIATE_DIR)/android_cpufeatures/cpu-features.h',
++                  ],
++                  'action': [
++                    'python', '-c',
++                    'import os, shutil; '
++                    'os.makedirs("<(INTERMEDIATE_DIR)/android_cpufeatures", exist_ok=True); '
++                    'shutil.copy2("<(android_ndk_path)/sources/android/cpufeatures/cpu-features.c", "<(INTERMEDIATE_DIR)/android_cpufeatures/"); '
++                    'shutil.copy2("<(android_ndk_path)/sources/android/cpufeatures/cpu-features.h", "<(INTERMEDIATE_DIR)/android_cpufeatures/")'
++                  ],
++                  'message': 'Copying Android NDK cpufeatures',
++                },
++              ],
++              'sources': [
++                '<(INTERMEDIATE_DIR)/android_cpufeatures/cpu-features.c',
++              ],
++              'include_dirs': [
++                '<(INTERMEDIATE_DIR)/android_cpufeatures',
++              ],
++              'direct_dependent_settings': {
++                'include_dirs': [
++                  '<(INTERMEDIATE_DIR)/android_cpufeatures',
++                ],
++              },
++            }],
++          ],
++        }, # android_cpufeatures
+         # {
+         #   'target_name': 'zlib_crc32_simd',
+         #   'type': 'static_library',
+@@ -238,6 +275,13 @@
+                         'zlib_adler32_simd',
+                         'zlib_arm_crc32',
+                       ],
++                      'conditions': [
++                        ['OS=="android"', {
++                          'dependencies': [
++                            'android_cpufeatures',
++                          ],
++                        }],
++                      ],
+                     }],
+                   ],
+                 }],
+-- 
+2.39.5 (Apple Git-154)
+

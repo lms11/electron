@@ -1,0 +1,29 @@
+From 6f1d219b8f53af80fba4f8c39f72b3f9f6b16648 Mon Sep 17 00:00:00 2001
+From: Shivram Khandeparker <shivramk@gmail.com>
+Date: Sun, 25 May 2025 19:43:16 +0000
+Subject: [PATCH 01/58] build: fix Android cross-compilation host toolchain
+
+Set host compiler environment variables to use GCC-12 instead of
+Android NDK toolchain for building ICU host tools. This fixes
+"Exec format error" when running host tools compiled for ARM64
+Android on x86_64 host during the build process.
+---
+ android_configure.py | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/android_configure.py b/android_configure.py
+index 5cea0393f4..a1e8faff9c 100644
+--- a/android_configure.py
++++ b/android_configure.py
+@@ -65,6 +65,8 @@ elif platform.system() == "Linux":
+ os.environ['PATH'] += os.pathsep + toolchain_path + "/bin"
+ os.environ['CC'] = toolchain_path + "/bin/" + TOOLCHAIN_PREFIX + android_sdk_version + "-" +  "clang"
+ os.environ['CXX'] = toolchain_path + "/bin/" + TOOLCHAIN_PREFIX + android_sdk_version + "-" + "clang++"
++os.environ['CC_host'] = "gcc-12"
++os.environ['CXX_host'] = "g++-12"
+ 
+ GYP_DEFINES = "target_arch=" + arch
+ GYP_DEFINES += " v8_target_arch=" + arch
+-- 
+2.39.5 (Apple Git-154)
+

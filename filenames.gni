@@ -801,4 +801,15 @@ filenames = {
   ]
 
   login_helper_sources = [ "shell/app/electron_login_helper.mm" ]
+
+  lib_sources_android = [
+    "shell/common/node_bindings_android.cc",
+    "shell/common/application_info_android.cc",
+    "shell/common/language_util_android.cc", 
+    "shell/common/platform_util_android.cc",
+    "shell/browser/browser_android.cc",
+    "shell/browser/native_window_android.cc",
+    "shell/browser/ui/file_dialog_android.cc",
+    "shell/browser/ui/message_box_android.cc",
+  ]
 }

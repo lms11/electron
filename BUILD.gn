@@ -565,6 +565,9 @@ source_set("electron_lib") {
   if (is_linux) {
     sources += filenames.lib_sources_linux
   }
+  if (is_android) {
+    sources += filenames.lib_sources_android
+  }
   if (!is_mac) {
     sources += filenames.lib_sources_views
   }
@@ -1198,6 +1201,8 @@ if (is_mac) {
         "shell/app/uv_stdio_fix.cc",
         "shell/app/uv_stdio_fix.h",
       ]
+    } else if (is_android) {
+      sources = [ "shell/app/electron_main_android.cc" ]
     }
     include_dirs = [ "." ]
     deps = [
@@ -1577,4 +1582,50 @@ group("copy_node_headers") {
 
 group("node_headers") {
   public_deps = [ ":tar_node_headers" ]
+}
+
+# Android-specific build targets
+if (is_android) {
+  import("//build/config/android/rules.gni")
+  
+  android_library("electron_java") {
+    java_files = [ "shell/android/app/src/main/java/org/electronjs/ElectronActivity.java" ]
+    deps = [ "//third_party/androidx:androidx_appcompat_appcompat_java" ]
+  }
+  
+  shared_library("electron_android") {
+    output_name = "electron"
+    
+    sources = [
+      "shell/android/app/src/main/jni/electron_jni.cpp",
+      "shell/app/electron_main_android.cc",
+    ]
+    
+    deps = [
+      ":electron_lib",
+      "//third_party/electron_node:libnode",
+      "//base",
+      "//base:i18n",
+    ]
+    
+    # Android-specific libraries
+    libs = [ "log", "android" ]
+    
+    configs += [ "//build/config/android:hide_all_but_jni_onload" ]
+  }
+  
+  android_apk("electron_apk") {
+    apk_name = "Electron"
+    android_manifest = "shell/android/app/src/main/AndroidManifest.xml"
+    
+    deps = [
+      ":electron_java",
+      ":electron_android",
+    ]
+    
+    shared_libraries = [ ":electron_android" ]
+    
+    # Include required resources
+    android_manifest_dep = ":electron_java"
+  }
 }
