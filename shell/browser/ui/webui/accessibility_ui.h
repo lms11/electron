@@ -6,6 +6,7 @@
 #define ELECTRON_SHELL_BROWSER_UI_WEBUI_ACCESSIBILITY_UI_H_
 
 #include "chrome/browser/ui/webui/accessibility/accessibility_ui.h"
+#include "components/prefs/pref_registry_simple.h"
 #include "content/public/browser/web_ui_controller.h"
 #include "content/public/browser/web_ui_data_source.h"
 #include "content/public/browser/web_ui_message_handler.h"
@@ -31,7 +32,7 @@ class ElectronAccessibilityUIMessageHandler
 
   void RegisterMessages() final;
 
-  static void RegisterPrefs(user_prefs::PrefRegistrySyncable* registry);
+  static void RegisterPrefs(PrefRegistrySimple* registry);
 
  private:
   void GetRequestTypeAndFilters(const base::Value::Dict& data,

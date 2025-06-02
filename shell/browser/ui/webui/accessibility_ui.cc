@@ -21,7 +21,7 @@
 #include "chrome/common/webui_url_constants.h"
 #include "chrome/grit/accessibility_resources.h"      // nogncheck
 #include "chrome/grit/accessibility_resources_map.h"  // nogncheck
-#include "components/pref_registry/pref_registry_syncable.h"
+#include "components/prefs/pref_registry_simple.h"
 #include "components/prefs/pref_service.h"
 #include "content/public/browser/ax_inspect_factory.h"
 #include "content/public/browser/browser_accessibility_state.h"
@@ -429,7 +429,7 @@ void ElectronAccessibilityUIMessageHandler::RegisterMessages() {
 
 // static
 void ElectronAccessibilityUIMessageHandler::RegisterPrefs(
-    user_prefs::PrefRegistrySyncable* registry) {
+    PrefRegistrySimple* registry) {
   const std::string_view default_api_type =
       std::string_view(ui::AXApiType::Type(ui::AXApiType::kBlink));
   registry->RegisterStringPref(prefs::kShownAccessibilityApiType,
