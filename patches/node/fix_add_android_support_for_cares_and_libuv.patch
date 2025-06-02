@@ -1,0 +1,102 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Shivram Khandeparker <shivramk@gmail.com>
+Date: Mon, 2 Jun 2025 11:13:46 +0000
+Subject: fix: add Android support for cares and libuv
+
+This patch adds Android-specific build configuration for c-ares and libuv
+dependencies to support building Node.js for Android platform.
+
+Changes include:
+- Adding Android config path for c-ares
+- Adding Android-specific sources and defines for both cares and libuv
+- Preventing duplicate HAVE_SYS_UIO_H definition in cares Android config
+
+diff --git a/deps/cares/config/android/ares_config.h b/deps/cares/config/android/ares_config.h
+index d09f6af1627395efa331258ffbf8043f20baf0de..6daf7da5be7c55958f76041b2d5617435a748b58 100644
+--- a/deps/cares/config/android/ares_config.h
++++ b/deps/cares/config/android/ares_config.h
+@@ -333,7 +333,9 @@
+ #define HAVE_SYS_TYPES_H
+ 
+ /* Define to 1 if you have the <sys/uio.h> header file. */
++#ifndef HAVE_SYS_UIO_H
+ #define HAVE_SYS_UIO_H
++#endif
+ 
+ /* Define to 1 if you have the <time.h> header file. */
+ #define HAVE_TIME_H
+diff --git a/deps/cares/unofficial.gni b/deps/cares/unofficial.gni
+index e02d7f425194c930ede76c971109792bb2344268..e48ce37bef6c580182434eee808189f3f2d94e29 100644
+--- a/deps/cares/unofficial.gni
++++ b/deps/cares/unofficial.gni
+@@ -44,6 +44,8 @@ template("cares_gn_build") {
+     ]
+     if (is_win) {
+       include_dirs += [ "config/win32" ]
++    } else if (is_android) {
++      include_dirs += [ "config/android" ]
+     } else if (is_linux) {
+       include_dirs += [ "config/linux" ]
+     } else if (is_mac) {
+@@ -58,7 +60,9 @@ template("cares_gn_build") {
+     }
+ 
+     sources = gypi_values.cares_sources_common
+-    if (is_linux) {
++    if (is_android) {
++      sources += [ "config/android/ares_config.h" ]
++    } else if (is_linux) {
+       sources += [ "config/linux/ares_config.h" ]
+     }
+     if (is_mac) {
+diff --git a/deps/uv/unofficial.gni b/deps/uv/unofficial.gni
+index 0944d6ddd241b113970ab6aa5804f9534fde882a..86ce3c13985a86b9ed2c92ecfa93c3829fcab845 100644
+--- a/deps/uv/unofficial.gni
++++ b/deps/uv/unofficial.gni
+@@ -33,6 +33,11 @@ template("uv_gn_build") {
+         "_GNU_SOURCE",
+       ]
+     }
++    if (is_android) {
++      defines += [
++        "_GNU_SOURCE",
++      ]
++    }
+     if (is_apple) {
+       defines += [
+         "_DARWIN_USE_64_BIT_INODE=1",
+@@ -86,7 +91,7 @@ template("uv_gn_build") {
+         "ws2_32.lib",
+       ]
+     }
+-    if (is_posix) {
++    if (is_posix && !is_android) {
+       ldflags = [ "-pthread" ]
+     }
+     if (is_linux) {
+@@ -96,6 +101,11 @@ template("uv_gn_build") {
+         "rt",
+       ]
+     }
++    if (is_android) {
++      libs = [
++        "dl",
++      ]
++    }
+ 
+     sources = gypi_values.uv_sources_common
+     if (is_win) {
+@@ -105,9 +115,12 @@ template("uv_gn_build") {
+       sources += gypi_values.uv_sources_posix +
+                  [ "src/unix/proctitle.c" ]
+     }
+-    if (is_linux) {
++    if (is_linux && !is_android) {
+       sources += gypi_values.uv_sources_linux
+     }
++    if (is_android) {
++      sources += gypi_values.uv_sources_android
++    }
+     if (is_apple) {
+       sources += gypi_values.uv_sources_apple +
+                  gypi_values.uv_sources_bsd_common
