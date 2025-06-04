@@ -487,7 +487,6 @@ source_set("electron_lib") {
     "//printing/buildflags",
     "//services/device/public/cpp/bluetooth:bluetooth",
     "//services/device/public/cpp/geolocation",
-    "//services/device/public/cpp/hid",
     "//services/device/public/mojom",
     "//services/proxy_resolver:lib",
     "//services/video_capture/public/mojom:constants",
@@ -512,8 +511,6 @@ source_set("electron_lib") {
     "//ui/gl",
     "//ui/native_theme",
     "//ui/shell_dialogs",
-    "//ui/views",
-    "//ui/views/controls/webview",
     "//v8",
     "//v8:v8_libplatform",
   ]
@@ -550,7 +547,28 @@ source_set("electron_lib") {
     ]
   }
 
+  if (!is_android) {
+    deps += [ "//services/device/public/cpp/hid" ]
+  }
+
+  if (toolkit_views) {
+    deps += [
+      "//ui/views",
+      "//ui/views/controls/webview",
+    ]
+  }
+
   deps += [ "//electron/build/config:generate_mas_config" ]
+
+  # Always needed dependencies for core Electron functionality
+  deps += [
+    "//services/device/public/cpp/usb:usb",
+    "//ui/menus:menus",
+  ]
+
+  if (enable_printing) {
+    deps += [ "//components/pdf/common:util" ]
+  }
 
   sources = filenames.lib_sources
   if (is_win) {
@@ -568,7 +586,7 @@ source_set("electron_lib") {
   if (is_android) {
     sources += filenames.lib_sources_android
   }
-  if (!is_mac) {
+  if (toolkit_views) {
     sources += filenames.lib_sources_views
   }
 
@@ -1428,9 +1446,13 @@ dist_zip("electron_ffmpeg_zip") {
 
 electron_chromedriver_deps = [
   ":licenses",
-  "//chrome/test/chromedriver:chromedriver_server",
   "//electron/buildflags",
 ]
+
+if (!is_android) {
+  electron_chromedriver_deps +=
+      [ "//chrome/test/chromedriver:chromedriver_server" ]
+}
 
 group("electron_chromedriver") {
   testonly = true
@@ -1587,44 +1609,47 @@ group("node_headers") {
 # Android-specific build targets
 if (is_android) {
   import("//build/config/android/rules.gni")
-  
+
   android_library("electron_java") {
-    java_files = [ "shell/android/app/src/main/java/org/electronjs/ElectronActivity.java" ]
+    sources = [
+      "shell/android/app/src/main/java/org/electronjs/ElectronActivity.java",
+    ]
     deps = [ "//third_party/androidx:androidx_appcompat_appcompat_java" ]
   }
-  
+
   shared_library("electron_android") {
     output_name = "electron"
-    
+
     sources = [
       "shell/android/app/src/main/jni/electron_jni.cpp",
       "shell/app/electron_main_android.cc",
     ]
-    
+
     deps = [
       ":electron_lib",
-      "//third_party/electron_node:libnode",
       "//base",
       "//base:i18n",
+      "//third_party/electron_node:libnode",
     ]
-    
+
     # Android-specific libraries
-    libs = [ "log", "android" ]
-    
-    configs += [ "//build/config/android:hide_all_but_jni_onload" ]
+    libs = [
+      "log",
+      "android",
+    ]
   }
-  
+
   android_apk("electron_apk") {
     apk_name = "Electron"
     android_manifest = "shell/android/app/src/main/AndroidManifest.xml"
-    
+
     deps = [
-      ":electron_java",
       ":electron_android",
+      ":electron_java",
     ]
-    
+
     shared_libraries = [ ":electron_android" ]
-    
+
     # Include required resources
     android_manifest_dep = ":electron_java"
   }
