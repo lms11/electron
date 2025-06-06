@@ -13,6 +13,7 @@
 #endif
 
 #include "base/memory/raw_ptr.h"
+#include "content/public/browser/render_frame_host.h"
 #include "mojo/public/cpp/bindings/associated_receiver.h"
 #include "shell/common/api/api.mojom.h"
 

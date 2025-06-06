@@ -38,7 +38,9 @@
 #include "shell/browser/electron_browser_context.h"
 #include "shell/browser/javascript_environment.h"
 #include "shell/browser/net/asar/asar_url_loader_factory.h"
-#include "shell/browser/net/proxying_url_loader_factory.h"
+// FIXME(shivramk): Move kBypassCustomProtocolHandlers to a common header
+// #include "shell/browser/net/proxying_url_loader_factory.h"
+const uint32_t kBypassCustomProtocolHandlers = 1 << 30;
 #include "shell/browser/protocol_registry.h"
 #include "shell/common/gin_converters/callback_converter.h"
 #include "shell/common/gin_converters/gurl_converter.h"

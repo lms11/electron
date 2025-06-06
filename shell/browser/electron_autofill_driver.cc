@@ -17,7 +17,9 @@ namespace electron {
 
 AutofillDriver::AutofillDriver(content::RenderFrameHost* render_frame_host)
     : render_frame_host_(render_frame_host) {
+#if defined(TOOLKIT_VIEWS)
   autofill_popup_ = std::make_unique<AutofillPopup>();
+#endif
 }
 
 AutofillDriver::~AutofillDriver() = default;
@@ -43,6 +45,7 @@ void AutofillDriver::ShowAutofillPopup(
   if (!owner_window)
     return;
 
+#if defined(TOOLKIT_VIEWS)
   auto* embedder = web_contents->embedder();
 
   bool osr =
@@ -62,11 +65,14 @@ void AutofillDriver::ShowAutofillPopup(
   autofill_popup_->CreateView(render_frame_host_, embedder_frame_host, osr,
                               owner_window->content_view(), popup_bounds);
   autofill_popup_->SetItems(values, labels);
+#endif
 }
 
 void AutofillDriver::HideAutofillPopup() {
+#if defined(TOOLKIT_VIEWS)
   if (autofill_popup_)
     autofill_popup_->Hide();
+#endif
 }
 
 }  // namespace electron

@@ -237,9 +237,11 @@ BrowserProcessImpl::background_printing_manager() {
   return nullptr;
 }
 
+#if !BUILDFLAG(IS_ANDROID)
 IntranetRedirectDetector* BrowserProcessImpl::intranet_redirect_detector() {
   return nullptr;
 }
+#endif
 
 DownloadStatusUpdater* BrowserProcessImpl::download_status_updater() {
   return nullptr;
@@ -249,9 +251,11 @@ DownloadRequestLimiter* BrowserProcessImpl::download_request_limiter() {
   return nullptr;
 }
 
+#if BUILDFLAG(ENABLE_BACKGROUND_MODE)
 BackgroundModeManager* BrowserProcessImpl::background_mode_manager() {
   return nullptr;
 }
+#endif
 
 StatusTray* BrowserProcessImpl::status_tray() {
   return nullptr;
@@ -284,9 +288,11 @@ network_time::NetworkTimeTracker* BrowserProcessImpl::network_time_tracker() {
   return nullptr;
 }
 
+#if !BUILDFLAG(IS_ANDROID)
 gcm::GCMDriver* BrowserProcessImpl::gcm_driver() {
   return nullptr;
 }
+#endif
 
 resource_coordinator::ResourceCoordinatorParts*
 BrowserProcessImpl::resource_coordinator_parts() {
@@ -301,6 +307,7 @@ SerialPolicyAllowedPorts* BrowserProcessImpl::serial_policy_allowed_ports() {
   return nullptr;
 }
 
+#if !BUILDFLAG(IS_ANDROID)
 HidSystemTrayIcon* BrowserProcessImpl::hid_system_tray_icon() {
   return nullptr;
 }
@@ -308,6 +315,7 @@ HidSystemTrayIcon* BrowserProcessImpl::hid_system_tray_icon() {
 UsbSystemTrayIcon* BrowserProcessImpl::usb_system_tray_icon() {
   return nullptr;
 }
+#endif
 
 subresource_filter::RulesetService*
 BrowserProcessImpl::fingerprinting_protection_ruleset_service() {

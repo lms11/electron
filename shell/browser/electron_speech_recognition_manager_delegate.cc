@@ -27,7 +27,9 @@ ElectronSpeechRecognitionManagerDelegate::GetEventListener() {
   return nullptr;
 }
 
+#if !BUILDFLAG(IS_ANDROID)
 void ElectronSpeechRecognitionManagerDelegate::BindSpeechRecognitionContext(
     mojo::PendingReceiver<media::mojom::SpeechRecognitionContext> receiver) {}
+#endif
 
 }  // namespace electron

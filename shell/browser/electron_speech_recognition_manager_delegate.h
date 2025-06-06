@@ -28,9 +28,11 @@ class ElectronSpeechRecognitionManagerDelegate
       base::OnceCallback<void(bool ask_user, bool is_allowed)> callback)
       override;
   content::SpeechRecognitionEventListener* GetEventListener() override;
+#if !BUILDFLAG(IS_ANDROID)
   void BindSpeechRecognitionContext(
       mojo::PendingReceiver<media::mojom::SpeechRecognitionContext> receiver)
       override;
+#endif
 };
 
 }  // namespace electron

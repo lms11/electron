@@ -137,7 +137,7 @@ class ElectronBrowserMainParts : public content::BrowserMainParts {
 
 #if BUILDFLAG(IS_MAC)
   std::unique_ptr<ViewsDelegateMac> views_delegate_;
-#else
+#elif defined(TOOLKIT_VIEWS)
   std::unique_ptr<ViewsDelegate> views_delegate_;
 #endif
 

@@ -99,10 +99,14 @@ class BrowserProcessImpl : public BrowserProcess {
   printing::PrintPreviewDialogController* print_preview_dialog_controller()
       override;
   printing::BackgroundPrintingManager* background_printing_manager() override;
+#if !BUILDFLAG(IS_ANDROID)
   IntranetRedirectDetector* intranet_redirect_detector() override;
+#endif
   DownloadStatusUpdater* download_status_updater() override;
   DownloadRequestLimiter* download_request_limiter() override;
+#if BUILDFLAG(ENABLE_BACKGROUND_MODE)
   BackgroundModeManager* background_mode_manager() override;
+#endif
   StatusTray* status_tray() override;
   safe_browsing::SafeBrowsingService* safe_browsing_service() override;
   subresource_filter::RulesetService* subresource_filter_ruleset_service()
@@ -111,21 +115,27 @@ class BrowserProcessImpl : public BrowserProcess {
   MediaFileSystemRegistry* media_file_system_registry() override;
   WebRtcLogUploader* webrtc_log_uploader() override;
   network_time::NetworkTimeTracker* network_time_tracker() override;
+#if !BUILDFLAG(IS_ANDROID)
   gcm::GCMDriver* gcm_driver() override;
+#endif
   resource_coordinator::ResourceCoordinatorParts* resource_coordinator_parts()
       override;
   resource_coordinator::TabManager* GetTabManager() override;
   SerialPolicyAllowedPorts* serial_policy_allowed_ports() override;
+#if !BUILDFLAG(IS_ANDROID)
   HidSystemTrayIcon* hid_system_tray_icon() override;
   UsbSystemTrayIcon* usb_system_tray_icon() override;
+#endif
   os_crypt_async::OSCryptAsync* os_crypt_async() override;
   void set_additional_os_crypt_async_provider_for_test(
       size_t precedence,
       std::unique_ptr<os_crypt_async::KeyProvider> provider) override;
   void CreateDevToolsProtocolHandler() override {}
   void CreateDevToolsAutoOpener() override {}
+#if BUILDFLAG(ENABLE_BACKGROUND_MODE)
   void set_background_mode_manager_for_test(
       std::unique_ptr<BackgroundModeManager> manager) override {}
+#endif
 #if (BUILDFLAG(IS_WIN) || BUILDFLAG(IS_LINUX))
   void StartAutoupdateTimer() override {}
 #endif

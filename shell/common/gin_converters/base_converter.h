@@ -31,6 +31,10 @@ struct Converter<base::TerminationStatus> {
         return gin::ConvertToV8(isolate, "launch-failed");
       case base::TERMINATION_STATUS_OOM:
         return gin::ConvertToV8(isolate, "oom");
+#if BUILDFLAG(IS_ANDROID)
+      case base::TERMINATION_STATUS_OOM_PROTECTED:
+        return gin::ConvertToV8(isolate, "oom-protected");
+#endif
 #if BUILDFLAG(IS_WIN)
       case base::TERMINATION_STATUS_INTEGRITY_FAILURE:
         return gin::ConvertToV8(isolate, "integrity-failure");

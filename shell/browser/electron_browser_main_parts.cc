@@ -103,7 +103,7 @@
 #if BUILDFLAG(IS_MAC)
 #include "components/os_crypt/sync/keychain_password_mac.h"
 #include "shell/browser/ui/cocoa/views_delegate_mac.h"
-#else
+#elif !BUILDFLAG(IS_ANDROID)
 #include "shell/browser/ui/views/electron_views_delegate.h"
 #endif
 
@@ -417,7 +417,7 @@ void ElectronBrowserMainParts::ToolkitInitialized() {
 
 #if BUILDFLAG(IS_MAC)
   views_delegate_ = std::make_unique<ViewsDelegateMac>();
-#else
+#elif !BUILDFLAG(IS_ANDROID)
   views_delegate_ = std::make_unique<ViewsDelegate>();
 #endif
 }

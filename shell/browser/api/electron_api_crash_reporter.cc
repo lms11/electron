@@ -39,7 +39,7 @@
 #include "third_party/crashpad/crashpad/client/crashpad_info.h"  // nogncheck
 #endif
 
-#if BUILDFLAG(IS_LINUX)
+#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_ANDROID)
 #include "base/files/file_util.h"
 #include "base/uuid.h"
 #include "components/crash/core/common/crash_keys.h"

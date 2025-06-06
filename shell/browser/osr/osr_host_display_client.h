@@ -78,6 +78,13 @@ class OffScreenHostDisplayClient : public viz::HostDisplayClient {
   void DidCompleteSwapWithNewSize(const gfx::Size& size) override;
 #endif
 
+#if BUILDFLAG(IS_ANDROID)
+  void DidCompleteSwapWithSize(const gfx::Size& size) override;
+  void OnContextCreationResult(gpu::ContextResult result) override;
+  void SetWideColorEnabled(bool enabled) override;
+  void SetPreferredRefreshRate(float refresh_rate) override;
+#endif
+
   std::unique_ptr<LayeredWindowUpdater> layered_window_updater_;
   OnPaintCallback callback_;
   bool active_ = false;

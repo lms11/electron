@@ -487,7 +487,6 @@ source_set("electron_lib") {
     "//printing/buildflags",
     "//services/device/public/cpp/bluetooth:bluetooth",
     "//services/device/public/cpp/geolocation",
-    "//services/device/public/cpp/hid",
     "//services/device/public/mojom",
     "//services/proxy_resolver:lib",
     "//services/video_capture/public/mojom:constants",
@@ -512,8 +511,6 @@ source_set("electron_lib") {
     "//ui/gl",
     "//ui/native_theme",
     "//ui/shell_dialogs",
-    "//ui/views",
-    "//ui/views/controls/webview",
     "//v8",
     "//v8:v8_libplatform",
   ]
@@ -538,6 +535,13 @@ source_set("electron_lib") {
     "V8_DEPRECATION_WARNINGS",
   ]
   libs = []
+
+  if (toolkit_views) {
+    deps += [
+      "//ui/views",
+      "//ui/views/controls/webview",
+    ]
+  }
 
   if (is_linux) {
     defines += [ "GDK_DISABLE_DEPRECATION_WARNINGS" ]
@@ -565,8 +569,11 @@ source_set("electron_lib") {
   if (is_linux) {
     sources += filenames.lib_sources_linux
   }
-  if (!is_mac) {
+  if (!is_mac && !is_android) {
     sources += filenames.lib_sources_views
+  }
+  if (!is_android) {
+    sources += filenames.lib_sources_desktop
   }
 
   if (is_component_build) {
@@ -689,6 +696,11 @@ source_set("electron_lib") {
     public_deps += [
       "//sandbox/win:sandbox",
       "//third_party/crashpad/crashpad/handler",
+    ]
+  }
+  if (!is_android) {
+    deps += [
+      "//services/device/public/cpp/hid",
     ]
   }
 
@@ -1423,9 +1435,12 @@ dist_zip("electron_ffmpeg_zip") {
 
 electron_chromedriver_deps = [
   ":licenses",
-  "//chrome/test/chromedriver:chromedriver_server",
   "//electron/buildflags",
 ]
+
+if (!is_android) {
+  electron_chromedriver_deps += [ "//chrome/test/chromedriver:chromedriver_server" ]
+}
 
 group("electron_chromedriver") {
   testonly = true

@@ -347,9 +347,11 @@ class ElectronBrowserClient : public content::ContentBrowserClient,
 
   std::string user_agent_override_ = "";
 
+#if BUILDFLAG(ENABLE_ELECTRON_EXTENSIONS)
   // Simple shared ID generator, used by ProxyingURLLoaderFactory and
   // ProxyingWebSocket classes.
   uint64_t next_id_ = 0;
+#endif
 
   std::unique_ptr<ElectronSerialDelegate> serial_delegate_;
   std::unique_ptr<ElectronBluetoothDelegate> bluetooth_delegate_;

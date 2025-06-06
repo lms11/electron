@@ -3358,9 +3358,12 @@ bool WebContents::IsFocused() const {
     return false;
 
   if (type() != Type::kBackgroundPage) {
+// FIXME(shivramk) : What should happen on android?
+#if !BUILDFLAG(IS_ANDROID)
     auto* window = web_contents()->GetNativeView()->GetToplevelWindow();
     if (window && !window->IsVisible())
       return false;
+#endif
   }
 
   return view->HasFocus();

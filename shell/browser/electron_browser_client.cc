@@ -54,8 +54,6 @@
 #include "crypto/crypto_buildflags.h"
 #include "electron/buildflags/buildflags.h"
 #include "electron/fuses.h"
-#include "extensions/browser/extension_navigation_ui_data.h"
-#include "extensions/common/extension_id.h"
 #include "mojo/public/cpp/bindings/binder_map.h"
 #include "mojo/public/cpp/bindings/self_owned_associated_receiver.h"
 #include "net/ssl/ssl_cert_request_info.h"
@@ -74,7 +72,9 @@
 #include "shell/browser/api/electron_api_crash_reporter.h"
 #include "shell/browser/api/electron_api_protocol.h"
 #include "shell/browser/api/electron_api_web_contents.h"
+#if BUILDFLAG(ENABLE_ELECTRON_EXTENSIONS)
 #include "shell/browser/api/electron_api_web_request.h"
+#endif
 #include "shell/browser/badging/badge_manager.h"
 #include "shell/browser/bluetooth/electron_bluetooth_delegate.h"
 #include "shell/browser/child_web_contents_tracker.h"
@@ -95,8 +95,10 @@
 #include "shell/browser/native_window.h"
 #include "shell/browser/net/network_context_service.h"
 #include "shell/browser/net/network_context_service_factory.h"
+#if BUILDFLAG(ENABLE_ELECTRON_EXTENSIONS)
 #include "shell/browser/net/proxying_url_loader_factory.h"
 #include "shell/browser/net/proxying_websocket.h"
+#endif
 #include "shell/browser/net/system_network_context_manager.h"
 #include "shell/browser/network_hints_handler_impl.h"
 #include "shell/browser/notifications/notification_presenter.h"
@@ -157,6 +159,8 @@
 #include "content/public/browser/child_process_security_policy.h"
 #include "content/public/browser/file_url_loader.h"
 #include "content/public/browser/web_ui_url_loader_factory.h"
+#include "extensions/browser/extension_navigation_ui_data.h"
+#include "extensions/common/extension_id.h"
 #include "extensions/browser/api/mime_handler_private/mime_handler_private.h"
 #include "extensions/browser/api/web_request/web_request_api.h"
 #include "extensions/browser/browser_context_keyed_api_factory.h"
@@ -809,6 +813,9 @@ ElectronBrowserClient::CreateClientCertStore(
   return std::make_unique<net::ClientCertStoreMac>();
 #elif defined(USE_OPENSSL)
   return ();
+#else
+  // TODO (shivramk): What should happen for android?
+  return nullptr;
 #endif
 }
 
@@ -1250,6 +1257,7 @@ bool ElectronBrowserClient::WillInterceptWebSocket(
   if (!frame)
     return false;
 
+#if BUILDFLAG(ENABLE_ELECTRON_EXTENSIONS)
   v8::Isolate* isolate = JavascriptEnvironment::GetIsolate();
   v8::HandleScope scope(isolate);
   auto* browser_context = frame->GetProcess()->GetBrowserContext();
@@ -1261,16 +1269,17 @@ bool ElectronBrowserClient::WillInterceptWebSocket(
     return false;
 
   bool has_listener = web_request->HasListener();
-#if BUILDFLAG(ENABLE_ELECTRON_EXTENSIONS)
   const auto* web_request_api =
       extensions::BrowserContextKeyedAPIFactory<extensions::WebRequestAPI>::Get(
           browser_context);
 
   if (web_request_api)
     has_listener |= web_request_api->MayHaveProxies();
-#endif
 
   return has_listener;
+#else
+  return false;
+#endif
 }
 
 void ElectronBrowserClient::CreateWebSocket(
@@ -1283,12 +1292,13 @@ void ElectronBrowserClient::CreateWebSocket(
         handshake_client) {
   v8::Isolate* isolate = JavascriptEnvironment::GetIsolate();
   v8::HandleScope scope(isolate);
+
+#if BUILDFLAG(ENABLE_ELECTRON_EXTENSIONS)
   auto* browser_context = frame->GetProcess()->GetBrowserContext();
 
   auto web_request = api::WebRequest::FromOrCreate(isolate, browser_context);
   DCHECK(web_request.get());
 
-#if BUILDFLAG(ENABLE_ELECTRON_EXTENSIONS)
   if (!web_request->HasListener()) {
     auto* web_request_api = extensions::BrowserContextKeyedAPIFactory<
         extensions::WebRequestAPI>::Get(browser_context);
@@ -1300,13 +1310,14 @@ void ElectronBrowserClient::CreateWebSocket(
       return;
     }
   }
-#endif
 
+  // FIXME(shivramk): Implement WebSocket proxying for Android without extensions
   ProxyingWebSocket::StartProxying(
       web_request.get(), std::move(factory), url, site_for_cookies, user_agent,
       std::move(handshake_client), true, frame->GetProcess()->GetDeprecatedID(),
       frame->GetRoutingID(), frame->GetLastCommittedOrigin(), browser_context,
       &next_id_);
+#endif
 }
 
 void ElectronBrowserClient::WillCreateURLLoaderFactory(
@@ -1327,10 +1338,11 @@ void ElectronBrowserClient::WillCreateURLLoaderFactory(
     scoped_refptr<base::SequencedTaskRunner> navigation_response_task_runner) {
   v8::Isolate* isolate = JavascriptEnvironment::GetIsolate();
   v8::HandleScope scope(isolate);
+
+#if BUILDFLAG(ENABLE_ELECTRON_EXTENSIONS)
   auto web_request = api::WebRequest::FromOrCreate(isolate, browser_context);
   DCHECK(web_request.get());
 
-#if BUILDFLAG(ENABLE_ELECTRON_EXTENSIONS)
   if (!web_request->HasListener()) {
     auto* web_request_api = extensions::BrowserContextKeyedAPIFactory<
         extensions::WebRequestAPI>::Get(browser_context);
@@ -1351,6 +1363,7 @@ void ElectronBrowserClient::WillCreateURLLoaderFactory(
 
   auto [proxied_receiver, target_factory_remote] = factory_builder.Append();
 
+#if BUILDFLAG(ENABLE_ELECTRON_EXTENSIONS)
   // Required by WebRequestInfoInitParams.
   //
   // Note that in Electron we allow webRequest to capture requests sent from
@@ -1376,6 +1389,9 @@ void ElectronBrowserClient::WillCreateURLLoaderFactory(
       std::move(navigation_ui_data), std::move(navigation_id),
       std::move(proxied_receiver), std::move(target_factory_remote),
       std::move(header_client_receiver), type);
+#else
+  // FIXME(shivramk): Implement non-extension URL loading for Android
+#endif
 }
 
 std::vector<std::unique_ptr<content::URLLoaderRequestInterceptor>>

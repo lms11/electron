@@ -95,6 +95,17 @@ void OffScreenHostDisplayClient::CreateLayeredWindowUpdater(
   layered_window_updater_->SetActive(active_);
 }
 
+// FIXME (shivramk): Implement these methods
+#if BUILDFLAG(IS_ANDROID)
+void OffScreenHostDisplayClient::DidCompleteSwapWithSize(const gfx::Size& size) {}
+
+void OffScreenHostDisplayClient::OnContextCreationResult(gpu::ContextResult result) {}
+
+void OffScreenHostDisplayClient::SetWideColorEnabled(bool enabled) {}
+
+void OffScreenHostDisplayClient::SetPreferredRefreshRate(float refresh_rate) {}
+#endif
+
 #if BUILDFLAG(IS_LINUX) && !BUILDFLAG(IS_CHROMEOS)
 void OffScreenHostDisplayClient::DidCompleteSwapWithNewSize(
     const gfx::Size& size) {}
