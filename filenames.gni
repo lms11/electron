@@ -702,8 +702,6 @@ filenames = {
     "shell/renderer/electron_renderer_client.h",
     "shell/renderer/electron_sandboxed_renderer_client.cc",
     "shell/renderer/electron_sandboxed_renderer_client.h",
-    "shell/renderer/electron_smooth_round_rect.cc",
-    "shell/renderer/electron_smooth_round_rect.h",
     "shell/renderer/preload_realm_context.cc",
     "shell/renderer/preload_realm_context.h",
     "shell/renderer/preload_utils.cc",
@@ -734,6 +732,10 @@ filenames = {
     "shell/browser/hid/hid_chooser_controller.h",
     "shell/browser/ui/inspectable_web_contents_view.cc",
     "shell/browser/ui/inspectable_web_contents_view.h",
+    # TODO(shivramk): Smooth round rect causes duplicate symbols on Android
+    # because it's already included in Blink via a patch. Need to fix this properly.
+    "shell/renderer/electron_smooth_round_rect.cc",
+    "shell/renderer/electron_smooth_round_rect.h",
   ]
 
   lib_sources_extensions = [

@@ -15,7 +15,7 @@ namespace logging {
 void InitElectronLogging(const base::CommandLine& command_line,
                          bool is_preinit);
 
-base::FilePath GetLogFileName(const base::CommandLine& command_line);
+base::FilePath GetElectronLogFileName(const base::CommandLine& command_line);
 
 }  // namespace logging
 

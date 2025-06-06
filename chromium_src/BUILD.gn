@@ -75,8 +75,9 @@ static_library("chrome") {
     "//chrome/browser/process_singleton_internal.h",
     "//chrome/browser/serial/serial_blocklist.cc",
     "//chrome/browser/serial/serial_blocklist.h",
-    "//chrome/browser/ui/color/chrome_color_mixers.cc",
-    "//chrome/browser/ui/color/chrome_color_mixers.h",
+    # TODO (shivramk): These also cause symbol redefinition issues 
+    # "//chrome/browser/ui/color/chrome_color_mixers.cc",
+    # "//chrome/browser/ui/color/chrome_color_mixers.h",
     "//chrome/browser/ui/frame/window_frame_util.cc",
     "//chrome/browser/ui/frame/window_frame_util.h",
     "//chrome/browser/ui/ui_features.cc",
@@ -88,8 +89,11 @@ static_library("chrome") {
     "//chrome/browser/usb/usb_blocklist.h",
     "//extensions/browser/app_window/size_constraints.cc",
     "//extensions/browser/app_window/size_constraints.h",
-    "//ui/base/accelerators/global_accelerator_listener/global_accelerator_listener.cc",
-    "//ui/base/accelerators/global_accelerator_listener/global_accelerator_listener.h",
+    # TODO (shivramk): how does this work for normal builds. for anroid it causes symbol redefinition errors
+    # "//ui/base/accelerators/global_accelerator_listener/global_accelerator_listener.cc",
+    # "//ui/base/accelerators/global_accelerator_listener/global_accelerator_listener.h",
+    # TODO(shivramk): Do we really need this? 
+    "//ui/views/native_window_tracker.h",
   ]
 
   if (is_posix && !is_android) {

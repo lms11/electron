@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2024 The Electron Authors. All rights reserved.
+     Use of this source code is governed by the MIT license that can be
+     found in the LICENSE file. -->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.chromium.electron">
+
+    <!-- Permissions required by Chromium/Electron -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    
+    <!-- Optional permissions -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    
+    <!-- WebRTC permissions -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+
+    <application
+        android:name=".ElectronApplication"
+        android:label="@string/app_name"
+        android:icon="@mipmap/app_icon"
+        android:hardwareAccelerated="true"
+        android:largeHeap="true"
+        android:usesCleartextTraffic="true"
+        android:extractNativeLibs="true">
+
+        <!-- Main Electron Activity -->
+        <activity
+            android:name=".ElectronActivity"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|screenLayout|uiMode"
+            android:hardwareAccelerated="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            
+            <!-- Handle custom URL schemes -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="electron" />
+            </intent-filter>
+        </activity>
+
+        <!-- Chromium sandboxed processes -->
+        <service
+            android:name="org.chromium.content.app.SandboxedProcessService0"
+            android:process=":sandboxed_process0"
+            android:isolatedProcess="true"
+            android:exported="false" />
+        <service
+            android:name="org.chromium.content.app.SandboxedProcessService1"
+            android:process=":sandboxed_process1"
+            android:isolatedProcess="true"
+            android:exported="false" />
+        <service
+            android:name="org.chromium.content.app.SandboxedProcessService2"
+            android:process=":sandboxed_process2"
+            android:isolatedProcess="true"
+            android:exported="false" />
+        
+        <!-- GPU process -->
+        <service
+            android:name="org.chromium.content.app.PrivilegedProcessService0"
+            android:process=":privileged_process0"
+            android:exported="false" />
+            
+        <!-- File provider for sharing files -->
+        <provider
+            android:name="org.chromium.electron.ElectronFileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+        
+        <!-- Metadata -->
+        <meta-data android:name="android.max_aspect" android:value="2.1" />
+        
+    </application>
+
+</manifest>

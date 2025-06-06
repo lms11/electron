@@ -576,6 +576,18 @@ source_set("electron_lib") {
     sources += filenames.lib_sources_desktop
   }
 
+  if (is_android) {
+    # TODO(shivramk): Move this into filenames.lib_sources_android
+    sources += [
+      "shell/browser/native_window_android.cc",
+      "shell/browser/native_window_android.h",
+    ]
+    deps += [
+      "//electron/shell/android:electron_android_jni",
+      "//electron/shell/android:electron_jni_headers",
+    ]
+  }
+
   if (is_component_build) {
     defines += [ "NODE_SHARED_MODE" ]
   }
@@ -1200,120 +1212,137 @@ if (is_mac) {
     ]
   }
 
-  executable("electron_app") {
-    output_name = electron_project_name
-    if (is_win) {
-      sources = [ "shell/app/electron_main_win.cc" ]
-    } else if (is_linux) {
-      sources = [
-        "shell/app/electron_main_linux.cc",
-        "shell/app/uv_stdio_fix.cc",
-        "shell/app/uv_stdio_fix.h",
+  if (is_android) {
+    shared_library("electron_app") {
+      output_name = "electron"
+      sources = [ "shell/app/electron_main_android.cc" ]
+      
+      include_dirs = [ "." ]
+      deps = [
+        ":electron_lib",
+        # TODO(shivramk): Fix packed_resources for Android
+        # ":packed_resources",
+        "//electron/buildflags",
+        "//third_party/electron_node:libnode",
       ]
     }
-    include_dirs = [ "." ]
-    deps = [
-      ":default_app_asar",
-      ":electron_app_manifest",
-      ":electron_lib",
-      ":electron_win32_resources",
-      ":packed_resources",
-      "//components/crash/core/app",
-      "//content:sandbox_helper_win",
-      "//electron/buildflags",
-      "//third_party/electron_node:libnode",
-      "//ui/strings",
-    ]
-
-    data = []
-    data_deps = []
-
-    data += [ "$root_out_dir/resources.pak" ]
-    data += [ "$root_out_dir/chrome_100_percent.pak" ]
-    if (enable_hidpi) {
-      data += [ "$root_out_dir/chrome_200_percent.pak" ]
-    }
-    foreach(locale, platform_pak_locales) {
-      data += [ "$root_out_dir/locales/$locale.pak" ]
-    }
-
-    if (!is_mac) {
-      data += [ "$root_out_dir/resources/default_app.asar" ]
-    }
-
-    if (use_v8_context_snapshot) {
-      public_deps = [ "//tools/v8_context_snapshot:v8_context_snapshot" ]
-    }
-
-    if (is_linux) {
-      data_deps += [ "//components/crash/core/app:chrome_crashpad_handler" ]
-    }
-
-    if (is_win) {
-      sources += [
-        "$target_gen_dir/win-resources/electron.rc",
-        "shell/browser/resources/win/resource.h",
+  } else {
+    executable("electron_app") {
+      output_name = electron_project_name
+      if (is_win) {
+        sources = [ "shell/app/electron_main_win.cc" ]
+      } else if (is_linux) {
+        sources = [
+          "shell/app/electron_main_linux.cc",
+          "shell/app/uv_stdio_fix.cc",
+          "shell/app/uv_stdio_fix.h",
+        ]
+      }
+      
+      include_dirs = [ "." ]
+      deps = [
+        ":default_app_asar",
+        ":electron_app_manifest",
+        ":electron_lib",
+        ":electron_win32_resources",
+        ":packed_resources",
+        "//components/crash/core/app",
+        "//content:sandbox_helper_win",
+        "//electron/buildflags",
+        "//third_party/electron_node:libnode",
+        "//ui/strings",
       ]
+      
+      data = []
+      data_deps = []
 
-      deps += [
-        "//chrome/app:exit_code_watcher",
-        "//components/crash/core/app:run_as_crashpad_handler",
-      ]
-
-      ldflags = [ "/DELAYLOAD:ffmpeg.dll" ]
-
-      libs = [
-        "comctl32.lib",
-        "uiautomationcore.lib",
-        "wtsapi32.lib",
-      ]
-
-      configs -= [ "//build/config/win:console" ]
-      configs += [
-        "//build/config/win:windowed",
-        "//build/config/win:delayloads",
-      ]
-
-      if (current_cpu == "x86") {
-        # Set the initial stack size to 0.5MiB, instead of the 1.5MiB needed by
-        # Chrome's main thread. This saves significant memory on threads (like
-        # those in the Windows thread pool, and others) whose stack size we can
-        # only control through this setting. Because Chrome's main thread needs
-        # a minimum 1.5 MiB stack, the main thread (in 32-bit builds only) uses
-        # fibers to switch to a 1.5 MiB stack before running any other code.
-        ldflags += [ "/STACK:0x80000" ]
-      } else {
-        # Increase the initial stack size. The default is 1MB, this is 8MB.
-        ldflags += [ "/STACK:0x800000" ]
+      data += [ "$root_out_dir/resources.pak" ]
+      data += [ "$root_out_dir/chrome_100_percent.pak" ]
+      if (enable_hidpi) {
+        data += [ "$root_out_dir/chrome_200_percent.pak" ]
+      }
+      foreach(locale, platform_pak_locales) {
+        data += [ "$root_out_dir/locales/$locale.pak" ]
       }
 
-      # This is to support renaming of electron.exe. node-gyp has hard-coded
-      # executable names which it will recognise as node. This module definition
-      # file claims that the electron executable is in fact named "node.exe",
-      # which is one of the executable names that node-gyp recognizes.
-      # See https://github.com/nodejs/node-gyp/commit/52ceec3a6d15de3a8f385f43dbe5ecf5456ad07a
-      ldflags += [ "/DEF:" + rebase_path("build/electron.def", root_build_dir) ]
-      inputs = [
-        "shell/browser/resources/win/electron.ico",
-        "build/electron.def",
-      ]
-    }
-    if (is_linux) {
-      ldflags = [
-        "-pie",
+      if (!is_mac) {
+        data += [ "$root_out_dir/resources/default_app.asar" ]
+      }
 
-        # Required for exporting all symbols of libuv.
-        "-Wl,--whole-archive",
-        "obj/third_party/electron_node/deps/uv/libuv.a",
-        "-Wl,--no-whole-archive",
-      ]
-
-      if (!is_component_build && is_component_ffmpeg) {
-        configs += [ "//build/config/gcc:rpath_for_built_shared_libraries" ]
+      if (use_v8_context_snapshot) {
+        public_deps = [ "//tools/v8_context_snapshot:v8_context_snapshot" ]
       }
 
       if (is_linux) {
-        deps += [ "//sandbox/linux:chrome_sandbox" ]
+        data_deps += [ "//components/crash/core/app:chrome_crashpad_handler" ]
+      }
+
+      if (is_win) {
+        sources += [
+          "$target_gen_dir/win-resources/electron.rc",
+          "shell/browser/resources/win/resource.h",
+        ]
+
+        deps += [
+          "//chrome/app:exit_code_watcher",
+          "//components/crash/core/app:run_as_crashpad_handler",
+        ]
+
+        ldflags = [ "/DELAYLOAD:ffmpeg.dll" ]
+
+        libs = [
+          "comctl32.lib",
+          "uiautomationcore.lib",
+          "wtsapi32.lib",
+        ]
+
+        configs -= [ "//build/config/win:console" ]
+        configs += [
+          "//build/config/win:windowed",
+          "//build/config/win:delayloads",
+        ]
+
+        if (current_cpu == "x86") {
+          # Set the initial stack size to 0.5MiB, instead of the 1.5MiB needed by
+          # Chrome's main thread. This saves significant memory on threads (like
+          # those in the Windows thread pool, and others) whose stack size we can
+          # only control through this setting. Because Chrome's main thread needs
+          # a minimum 1.5 MiB stack, the main thread (in 32-bit builds only) uses
+          # fibers to switch to a 1.5 MiB stack before running any other code.
+          ldflags += [ "/STACK:0x80000" ]
+        } else {
+          # Increase the initial stack size. The default is 1MB, this is 8MB.
+          ldflags += [ "/STACK:0x800000" ]
+        }
+
+        # This is to support renaming of electron.exe. node-gyp has hard-coded
+        # executable names which it will recognise as node. This module definition
+        # file claims that the electron executable is in fact named "node.exe",
+        # which is one of the executable names that node-gyp recognizes.
+        # See https://github.com/nodejs/node-gyp/commit/52ceec3a6d15de3a8f385f43dbe5ecf5456ad07a
+        ldflags += [ "/DEF:" + rebase_path("build/electron.def", root_build_dir) ]
+        inputs = [
+          "shell/browser/resources/win/electron.ico",
+          "build/electron.def",
+        ]
+      }
+      if (is_linux) {
+        ldflags = [
+          "-pie",
+
+          # Required for exporting all symbols of libuv.
+          "-Wl,--whole-archive",
+          "obj/third_party/electron_node/deps/uv/libuv.a",
+          "-Wl,--no-whole-archive",
+        ]
+
+        if (!is_component_build && is_component_ffmpeg) {
+          configs += [ "//build/config/gcc:rpath_for_built_shared_libraries" ]
+        }
+
+        if (is_linux) {
+          deps += [ "//sandbox/linux:chrome_sandbox" ]
+        }
       }
     }
   }
@@ -1530,7 +1559,12 @@ action("libcxx_objects_zip") {
 }
 
 group("electron") {
-  public_deps = [ ":electron_app" ]
+  if (is_android) {
+    testonly = true
+    public_deps = [ "//electron/shell/android:electron_apk" ]
+  } else {
+    public_deps = [ ":electron_app" ]
+  }
 }
 
 ##### node_headers
