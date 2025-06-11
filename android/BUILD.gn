@@ -10,6 +10,31 @@ import("//third_party/jni_zero/jni_zero.gni")
 electron_manifest =
     "$target_gen_dir/electron_manifest/AndroidManifest.xml"
 
+shared_library_with_jni("libelectron_content_view") {
+  testonly = true
+  deps = [
+    "//components/crash/content/browser",
+    "//content/shell:content_shell_app",
+    "//content/shell:content_shell_lib",
+    "//content/shell:pak",
+    "//media",
+    "//skia",
+  ]
+
+  # Explicit dependency required for JNI registration to be able to
+  # find the native side functions.
+  if (is_component_build) {
+    deps += [
+      "//device/gamepad",
+      "//media/midi",
+    ]
+  }
+  sources = [ "electron_library_loader.cc" ]
+  configs -= [ "//build/config/android:hide_all_but_jni_onload" ]
+  configs += [ "//build/config/android:hide_all_but_jni" ]
+  java_targets = [ ":electron_apk" ]
+}
+
 android_resources("electron_apk_resources") {
   testonly = true
   sources = [
@@ -56,6 +81,17 @@ android_assets("electron_apk_assets") {
   ]
 }
 
+android_assets("electron_assets") {
+  testonly = true
+  sources = [ "$root_out_dir/content_shell.pak" ]
+  disable_compression = true
+  deps = [
+    "//content/shell:pak",
+    "//gin:v8_snapshot_assets",
+    "//third_party/icu:icu_assets",
+  ]
+}
+
 jinja_template("electron_manifest") {
   testonly = true
   input = "electron_apk/AndroidManifest.xml.jinja2"
@@ -71,21 +107,21 @@ android_apk("electron_apk") {
   deps = [
     ":electron_apk_assets",
     ":electron_apk_java",
+    ":electron_assets",
     "//base:base_java",
     "//components/crash/android:java",
     "//components/crash/core/app:chrome_crashpad_handler_named_as_so",
     "//components/metrics:metrics_java",
     "//content/public/android:content_java",
     "//content/public/test/android:android_test_message_pump_support_java",
-    "//content/shell/android:content_shell_assets",
     "//media/capture/video/android:capture_java",
     "//net/android:net_java",
     "//services/shape_detection:shape_detection_java",
     "//third_party/mesa_headers",
     "//ui/android:ui_java",
   ]
-  shared_libraries = [ "//content/shell/android:libcontent_shell_content_view" ]
-  srcjar_deps = [ "//content/shell/android:libcontent_shell_content_view__jni_registration" ]
+  shared_libraries = [ ":libelectron_content_view" ]
+  srcjar_deps = [ ":libelectron_content_view__jni_registration" ]
   loadable_modules = [ "$root_out_dir/libchrome_crashpad_handler.so" ]
   command_line_flags_file = "electron-command-line"
 }
