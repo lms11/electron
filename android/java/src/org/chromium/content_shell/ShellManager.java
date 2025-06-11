@@ -109,13 +109,6 @@ public class ShellManager extends FrameLayout {
                         FrameLayout.LayoutParams.MATCH_PARENT,
                         FrameLayout.LayoutParams.MATCH_PARENT));
         mActiveShell = shellView;
-        
-        // Hide the toolbar for Electron
-        android.view.View toolbar = shellView.findViewById(R.id.toolbar);
-        if (toolbar != null) {
-            toolbar.setVisibility(android.view.View.GONE);
-        }
-        
         WebContents webContents = mActiveShell.getWebContents();
         if (webContents != null) {
             mContentViewRenderView.setCurrentWebContents(webContents);

@@ -50,7 +50,6 @@ android_resources("content_shell_java_resources") {
   testonly = true
   sources = [
     "content_shell_resources/drawable/ic_refresh.png",
-    "content_shell_resources/drawable/progress.xml",
     "content_shell_resources/layout/shell_view.xml",
     "content_shell_resources/mipmap-hdpi/app_icon.png",
     "content_shell_resources/mipmap-mdpi/app_icon.png",
