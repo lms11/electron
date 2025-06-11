@@ -52,7 +52,7 @@ public class Shell extends LinearLayout {
     private long mNativeShell;
     private @Nullable ContentViewRenderView mContentViewRenderView;
     private @Nullable WindowAndroid mWindow;
-    private @Nullable ShellViewAndroidDelegate mViewAndroidDelegate;
+    private @Nullable ViewAndroidDelegate mViewAndroidDelegate;
 
     private @Nullable Callback<Boolean> mOverlayModeChangedCallbackForTesting;
 
@@ -181,9 +181,6 @@ public class Shell extends LinearLayout {
 
 
 
-    public @Nullable ShellViewAndroidDelegate getViewAndroidDelegate() {
-        return mViewAndroidDelegate;
-    }
 
     /**
      * Initializes the ContentView based on the native tab contents pointer passed in.
@@ -196,7 +193,7 @@ public class Shell extends LinearLayout {
     private void initFromNativeTabContents(WebContents webContents) {
         Context context = getContext();
         ContentView cv = ContentView.createContentView(context, webContents);
-        mViewAndroidDelegate = new ShellViewAndroidDelegate(cv);
+        mViewAndroidDelegate = ViewAndroidDelegate.createBasicDelegate(cv);
         assert (mWebContents != webContents);
         if (mWebContents != null) mWebContents.clearNativeReference();
         webContents.setDelegates(
