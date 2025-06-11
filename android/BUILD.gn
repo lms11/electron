@@ -1,0 +1,90 @@
+# Copyright 2024 The Electron Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import("//build/config/android/config.gni")
+import("//build/config/android/rules.gni")
+import("//third_party/icu/config.gni")
+import("//third_party/jni_zero/jni_zero.gni")
+
+electron_manifest =
+    "$target_gen_dir/electron_manifest/AndroidManifest.xml"
+
+android_resources("electron_apk_resources") {
+  testonly = true
+  sources = [
+    "electron_apk/res/layout/electron_activity.xml",
+    "electron_apk/res/values/strings.xml",
+  ]
+  deps = [ "//content/shell/android:content_shell_java_resources" ]
+}
+
+android_library("electron_apk_java") {
+  testonly = true
+  
+  resources_package = "org.chromium.electron_apk"
+  deps = [
+    ":electron_apk_resources",
+    ":electron_manifest",
+    "//base:base_java",
+    "//base:process_launcher_java",
+    "//build/android:build_java",
+    "//components/embedder_support/android:view_java",
+    "//content/public/android:content_java",
+    "//content/shell/android:content_shell_java",
+    "//media/capture/video/android:capture_java",
+    "//net/android:net_java",
+    "//third_party/android_deps:com_google_code_findbugs_jsr305_java",
+    "//third_party/jni_zero:jni_zero_java",
+    "//ui/android:ui_java",
+    "//url:gurl_java",
+  ]
+
+  sources = [
+    "electron_apk/src/org/chromium/electron_apk/ElectronActivity.java",
+    "electron_apk/src/org/chromium/electron_apk/ElectronApplication.java",
+    "java/src/org/chromium/electron_shell/ElectronShellManager.java",
+  ]
+}
+
+android_assets("electron_apk_assets") {
+  testonly = true
+  sources = [
+    "electron_apk/assets/index.html",
+    "electron_apk/assets/renderer.js",
+  ]
+}
+
+jinja_template("electron_manifest") {
+  testonly = true
+  input = "electron_apk/AndroidManifest.xml.jinja2"
+  output = electron_manifest
+  variables = [ "manifest_package=org.chromium.electron_apk" ]
+}
+
+android_apk("electron_apk") {
+  testonly = true
+  apk_name = "Electron"
+  android_manifest = electron_manifest
+  android_manifest_dep = ":electron_manifest"
+  deps = [
+    ":electron_apk_assets",
+    ":electron_apk_java",
+    "//base:base_java",
+    "//components/crash/android:java",
+    "//components/crash/core/app:chrome_crashpad_handler_named_as_so",
+    "//components/metrics:metrics_java",
+    "//content/public/android:content_java",
+    "//content/public/test/android:android_test_message_pump_support_java",
+    "//content/shell/android:content_shell_assets",
+    "//media/capture/video/android:capture_java",
+    "//net/android:net_java",
+    "//services/shape_detection:shape_detection_java",
+    "//third_party/mesa_headers",
+    "//ui/android:ui_java",
+  ]
+  shared_libraries = [ "//content/shell/android:libcontent_shell_content_view" ]
+  srcjar_deps = [ "//content/shell/android:libcontent_shell_content_view__jni_registration" ]
+  loadable_modules = [ "$root_out_dir/libchrome_crashpad_handler.so" ]
+  command_line_flags_file = "electron-command-line"
+}

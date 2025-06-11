@@ -1416,10 +1416,12 @@ group("licenses") {
 
 dist_zip("electron_dist_zip") {
   data_deps = [
-    ":electron_app",
     ":electron_version_file",
     ":licenses",
   ]
+  if (!is_android) {
+    data_deps += [ ":electron_app" ]
+  }
   if (is_linux) {
     data_deps += [ "//sandbox/linux:chrome_sandbox" ]
   }
@@ -1530,7 +1532,12 @@ action("libcxx_objects_zip") {
 }
 
 group("electron") {
-  public_deps = [ ":electron_app" ]
+  if (is_android) {
+    testonly = true
+    public_deps = [ "//electron/android:electron_apk" ]
+  } else {
+    public_deps = [ ":electron_app" ]
+  }
 }
 
 ##### node_headers
