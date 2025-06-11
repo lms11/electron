@@ -22,10 +22,9 @@ import org.chromium.content_public.browser.Visibility;
 import org.chromium.content_public.browser.WebContents;
 import org.chromium.content_shell.Shell;
 import org.chromium.content_shell.ShellManager;
+import org.chromium.electron_shell.AssetExtractor;
 import org.chromium.ui.base.ActivityWindowAndroid;
 import org.chromium.ui.base.IntentRequestTracker;
-
-import java.io.File;
 
 /** Activity for managing the Content Shell. */
 public class ElectronActivity extends Activity {
@@ -110,10 +109,15 @@ public class ElectronActivity extends Activity {
             shellUrl = mStartupUrl;
         } else {
             // Load our custom index.html from extracted assets
-            File filesDir = getFilesDir();
-            File indexFile = new File(filesDir, "assets/index.html");
-            shellUrl = "file://" + indexFile.getAbsolutePath();
-            Log.d(TAG, "Loading from: " + shellUrl);
+            AssetExtractor assetExtractor = ElectronApplication.getAssetExtractor();
+            if (assetExtractor != null) {
+                shellUrl = assetExtractor.getAssetFileUrl("index.html");
+                Log.d(TAG, "Loading from: " + shellUrl);
+            } else {
+                // Fallback to a default URL if asset extraction failed
+                shellUrl = "data:text/html,<h1>Asset extraction failed</h1>";
+                Log.e(TAG, "AssetExtractor is null, using fallback URL");
+            }
         }
 
         if (savedInstanceState != null && savedInstanceState.containsKey(ACTIVE_SHELL_URL_KEY)) {
