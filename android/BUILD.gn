@@ -109,7 +109,7 @@ android_library("electron_apk_java") {
   sources = [
     "apk/src/org/electronjs/apk/ElectronActivity.java",
     "apk/src/org/electronjs/apk/ElectronApplication.java",
-    "java/src/org/chromium/electron_shell/AssetExtractor.java",
+    "apk/src/org/electronjs/apk/AssetExtractor.java",
   ]
 }
 
