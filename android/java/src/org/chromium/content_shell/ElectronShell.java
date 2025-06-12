@@ -119,37 +119,6 @@ public class ElectronShell extends LinearLayout {
     protected void onFinishInflate() {
         super.onFinishInflate();
     }
-    
-    @CalledByNative
-    private boolean isFullscreenForTabOrPending() {
-        // Always return false since we don't have a toolbar
-        return false;
-    }
-    
-    @CalledByNative
-    private void toggleFullscreenModeForTab(boolean enterFullscreen) {
-        // No-op since we don't have a toolbar
-    }
-    
-    @CalledByNative
-    private void onUpdateUrl(String url) {
-        // No-op since we don't have a URL bar
-    }
-    
-    @CalledByNative
-    private void onLoadProgressChanged(double progress) {
-        // No-op since we don't have a progress bar
-    }
-    
-    @CalledByNative
-    private void setIsLoading(boolean loading) {
-        // No-op since we don't have loading indicators
-    }
-    
-    @CalledByNative
-    private void enableUiControl(int controlId, boolean enabled) {
-        // No-op since we don't have navigation controls
-    }
 
     /**
      * Loads an URL.  This will perform minimal amounts of sanitizing of the URL to attempt to
