@@ -26,7 +26,7 @@ import org.chromium.ui.base.WindowAndroid;
 /** Container and generator of ShellViews. */
 @JNINamespace("content")
 @NullMarked
-public class ShellManager extends FrameLayout {
+public class ElectronShellManager extends FrameLayout {
 
     public static final String DEFAULT_SHELL_URL = "http://www.google.com";
     private WindowAndroid mWindow;
@@ -36,9 +36,9 @@ public class ShellManager extends FrameLayout {
     private @Nullable ContentViewRenderView mContentViewRenderView;
 
     /** Constructor for inflating via XML. */
-    public ShellManager(final Context context, AttributeSet attrs) {
+    public ElectronShellManager(final Context context, AttributeSet attrs) {
         super(context, attrs);
-        ShellManagerJni.get().init(this);
+        ElectronShellManagerJni.get().init(this);
     }
 
     /**
@@ -77,7 +77,7 @@ public class ShellManager extends FrameLayout {
     public void launchShell(String url) {
         ThreadUtils.assertOnUiThread();
         ElectronShell previousShell = mActiveShell;
-        ShellManagerJni.get().launchShell(url);
+        ElectronShellManagerJni.get().launchShell(url);
         if (previousShell != null) previousShell.close();
     }
 

@@ -21,7 +21,7 @@ import org.chromium.content_public.browser.DeviceUtils;
 import org.chromium.content_public.browser.Visibility;
 import org.chromium.content_public.browser.WebContents;
 import org.chromium.content_shell.ElectronShell;
-import org.chromium.content_shell.ShellManager;
+import org.chromium.content_shell.ElectronShellManager;
 import org.chromium.electron_shell.AssetExtractor;
 import org.chromium.ui.base.ActivityWindowAndroid;
 import org.chromium.ui.base.IntentRequestTracker;
@@ -37,7 +37,7 @@ public class ElectronActivity extends Activity {
     // Native switch - shell_switches::kRunWebTests
     private static final String RUN_WEB_TESTS_SWITCH = "run-web-tests";
 
-    private ShellManager mShellManager;
+    private ElectronShellManager mShellManager;
     private ActivityWindowAndroid mWindowAndroid;
     private Intent mLastSentIntent;
     private String mStartupUrl;
@@ -226,10 +226,10 @@ public class ElectronActivity extends Activity {
     }
 
     /**
-     * @return The {@link ShellManager} configured for the activity or null if it has not been
+     * @return The {@link ElectronShellManager} configured for the activity or null if it has not been
      *         created yet.
      */
-    public ShellManager getShellManager() {
+    public ElectronShellManager getShellManager() {
         return mShellManager;
     }
 
