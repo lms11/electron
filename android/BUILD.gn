@@ -88,7 +88,7 @@ android_library("content_shell_java") {
 android_library("electron_apk_java") {
   testonly = true
   
-  resources_package = "org.chromium.electron_apk"
+  resources_package = "org.electronjs.apk"
   deps = [
     ":content_shell_java",
     ":electron_apk_resources",
@@ -107,8 +107,8 @@ android_library("electron_apk_java") {
   ]
 
   sources = [
-    "apk/src/org/chromium/electron_apk/ElectronActivity.java",
-    "apk/src/org/chromium/electron_apk/ElectronApplication.java",
+    "apk/src/org/electronjs/apk/ElectronActivity.java",
+    "apk/src/org/electronjs/apk/ElectronApplication.java",
     "java/src/org/chromium/electron_shell/AssetExtractor.java",
   ]
 }
@@ -136,7 +136,7 @@ jinja_template("electron_manifest") {
   testonly = true
   input = "apk/AndroidManifest.xml.jinja2"
   output = electron_manifest
-  variables = [ "manifest_package=org.chromium.electron_apk" ]
+  variables = [ "manifest_package=org.electronjs.apk" ]
 }
 
 android_apk("electron_apk") {
