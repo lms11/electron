@@ -20,7 +20,7 @@ import org.chromium.content_public.browser.BrowserStartupController;
 import org.chromium.content_public.browser.DeviceUtils;
 import org.chromium.content_public.browser.Visibility;
 import org.chromium.content_public.browser.WebContents;
-import org.chromium.content_shell.Shell;
+import org.chromium.content_shell.ElectronShell;
 import org.chromium.content_shell.ShellManager;
 import org.chromium.electron_shell.AssetExtractor;
 import org.chromium.ui.base.ActivityWindowAndroid;
@@ -171,7 +171,7 @@ public class ElectronActivity extends Activity {
 
         String url = getUrlFromIntent(intent);
         if (!TextUtils.isEmpty(url)) {
-            Shell activeView = getActiveShell();
+            ElectronShell activeView = getActiveShell();
             if (activeView != null) {
                 activeView.loadUrl(url);
             }
@@ -234,18 +234,18 @@ public class ElectronActivity extends Activity {
     }
 
     /**
-     * @return The currently visible {@link Shell} or null if one is not showing.
+     * @return The currently visible {@link ElectronShell} or null if one is not showing.
      */
-    public Shell getActiveShell() {
+    public ElectronShell getActiveShell() {
         return mShellManager != null ? mShellManager.getActiveShell() : null;
     }
 
     /**
-     * @return The {@link WebContents} owned by the currently visible {@link Shell} or null if
+     * @return The {@link WebContents} owned by the currently visible {@link ElectronShell} or null if
      *         one is not showing.
      */
     public WebContents getActiveWebContents() {
-        Shell shell = getActiveShell();
+        ElectronShell shell = getActiveShell();
         return shell != null ? shell.getWebContents() : null;
     }
 }

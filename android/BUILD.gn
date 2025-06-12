@@ -12,7 +12,7 @@ electron_manifest =
 
 generate_jni("content_shell_jni_headers") {
   sources = [
-    "java/src/org/chromium/content_shell/Shell.java",
+    "java/src/org/chromium/content_shell/ElectronShell.java",
     "java/src/org/chromium/content_shell/ShellManager.java",
   ]
 }
@@ -86,7 +86,7 @@ android_library("content_shell_java") {
   ]
   
   sources = [
-    "java/src/org/chromium/content_shell/Shell.java",
+    "java/src/org/chromium/content_shell/ElectronShell.java",
     "java/src/org/chromium/content_shell/ShellManager.java",
   ]
   

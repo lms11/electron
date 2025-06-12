@@ -30,7 +30,7 @@ public class ShellManager extends FrameLayout {
 
     public static final String DEFAULT_SHELL_URL = "http://www.google.com";
     private WindowAndroid mWindow;
-    private @Nullable Shell mActiveShell;
+    private @Nullable ElectronShell mActiveShell;
 
     // The target for all content rendering.
     private @Nullable ContentViewRenderView mContentViewRenderView;
@@ -66,7 +66,7 @@ public class ShellManager extends FrameLayout {
     /**
      * @return The currently visible shell view or null if one is not showing.
      */
-    public @Nullable Shell getActiveShell() {
+    public @Nullable ElectronShell getActiveShell() {
         return mActiveShell;
     }
 
@@ -76,7 +76,7 @@ public class ShellManager extends FrameLayout {
      */
     public void launchShell(String url) {
         ThreadUtils.assertOnUiThread();
-        Shell previousShell = mActiveShell;
+        ElectronShell previousShell = mActiveShell;
         ShellManagerJni.get().launchShell(url);
         if (previousShell != null) previousShell.close();
     }
@@ -90,7 +90,7 @@ public class ShellManager extends FrameLayout {
         }
         LayoutInflater inflater =
                 (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        Shell shellView = (Shell) inflater.inflate(R.layout.shell_view, null);
+        ElectronShell shellView = (ElectronShell) inflater.inflate(R.layout.shell_view, null);
         shellView.initialize(nativeShellPtr, mWindow);
 
         // TODO(tedchoc): Allow switching back to these inactive shells.
@@ -101,7 +101,7 @@ public class ShellManager extends FrameLayout {
     }
 
     @RequiresNonNull("mContentViewRenderView")
-    private void showShell(Shell shellView) {
+    private void showShell(ElectronShell shellView) {
         shellView.setContentViewRenderView(mContentViewRenderView);
         addView(
                 shellView,
@@ -117,7 +117,7 @@ public class ShellManager extends FrameLayout {
     }
 
     @CalledByNative
-    private void removeShell(Shell shellView) {
+    private void removeShell(ElectronShell shellView) {
         if (shellView == mActiveShell) mActiveShell = null;
         if (shellView.getParent() == null) return;
         shellView.setContentViewRenderView(null);

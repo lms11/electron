@@ -43,7 +43,7 @@ import org.chromium.ui.base.WindowAndroid;
 /** Container for the various UI components that make up a shell window. */
 @JNINamespace("content")
 @NullMarked
-public class Shell extends LinearLayout {
+public class ElectronShell extends LinearLayout {
 
 
     private WebContents mWebContents;
@@ -57,7 +57,7 @@ public class Shell extends LinearLayout {
     private @Nullable Callback<Boolean> mOverlayModeChangedCallbackForTesting;
 
     /** Constructor for inflating via XML. */
-    public Shell(Context context, AttributeSet attrs) {
+    public ElectronShell(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
@@ -95,7 +95,7 @@ public class Shell extends LinearLayout {
      */
     public void close() {
         if (mNativeShell == 0) return;
-        ShellJni.get().closeShell(mNativeShell);
+        ElectronShellJni.get().closeShell(mNativeShell);
     }
 
     @SuppressWarnings("NullAway")
