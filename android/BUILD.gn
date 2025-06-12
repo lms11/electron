@@ -46,27 +46,19 @@ shared_library_with_jni("libelectron_content_view") {
   ]
 }
 
-android_resources("content_shell_java_resources") {
-  testonly = true
-  sources = [
-    "content_shell_resources/drawable/ic_refresh.png",
-    "content_shell_resources/layout/shell_view.xml",
-    "content_shell_resources/mipmap-hdpi/app_icon.png",
-    "content_shell_resources/mipmap-mdpi/app_icon.png",
-    "content_shell_resources/mipmap-xhdpi/app_icon.png",
-    "content_shell_resources/mipmap-xxhdpi/app_icon.png",
-    "content_shell_resources/mipmap-xxxhdpi/app_icon.png",
-    "content_shell_resources/values/strings.xml",
-  ]
-}
-
 android_resources("electron_apk_resources") {
   testonly = true
   sources = [
-    "electron_apk/res/layout/electron_activity.xml",
-    "electron_apk/res/values/strings.xml",
+    "apk/res/drawable/ic_refresh.png",
+    "apk/res/layout/electron_activity.xml",
+    "apk/res/layout/shell_view.xml",
+    "apk/res/mipmap-hdpi/app_icon.png",
+    "apk/res/mipmap-mdpi/app_icon.png",
+    "apk/res/mipmap-xhdpi/app_icon.png",
+    "apk/res/mipmap-xxhdpi/app_icon.png",
+    "apk/res/mipmap-xxxhdpi/app_icon.png",
+    "apk/res/values/strings.xml",
   ]
-  deps = [ ":content_shell_java_resources" ]
 }
 
 android_library("content_shell_java") {
@@ -74,7 +66,7 @@ android_library("content_shell_java") {
   
   resources_package = "org.chromium.content_shell"
   deps = [
-    ":content_shell_java_resources",
+    ":electron_apk_resources",
     "//base:base_java",
     "//components/embedder_support/android:content_view_java",
     "//components/embedder_support/android:view_java",
@@ -115,8 +107,8 @@ android_library("electron_apk_java") {
   ]
 
   sources = [
-    "electron_apk/src/org/chromium/electron_apk/ElectronActivity.java",
-    "electron_apk/src/org/chromium/electron_apk/ElectronApplication.java",
+    "apk/src/org/chromium/electron_apk/ElectronActivity.java",
+    "apk/src/org/chromium/electron_apk/ElectronApplication.java",
     "java/src/org/chromium/electron_shell/AssetExtractor.java",
   ]
 }
@@ -124,8 +116,8 @@ android_library("electron_apk_java") {
 android_assets("electron_apk_assets") {
   testonly = true
   sources = [
-    "electron_apk/assets/index.html",
-    "electron_apk/assets/renderer.js",
+    "apk/assets/index.html",
+    "apk/assets/renderer.js",
   ]
 }
 
@@ -142,7 +134,7 @@ android_assets("electron_assets") {
 
 jinja_template("electron_manifest") {
   testonly = true
-  input = "electron_apk/AndroidManifest.xml.jinja2"
+  input = "apk/AndroidManifest.xml.jinja2"
   output = electron_manifest
   variables = [ "manifest_package=org.chromium.electron_apk" ]
 }
