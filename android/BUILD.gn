@@ -37,7 +37,11 @@ shared_library_with_jni("libelectron_content_view") {
       "//media/midi",
     ]
   }
-  sources = [ "electron_library_loader.cc" ]
+  sources = [
+    "electron_library_loader.cc",
+    "shell_manager.cc",
+    "shell_manager.h",
+  ]
   configs -= [ "//build/config/android:hide_all_but_jni_onload" ]
   configs += [ "//build/config/android:hide_all_but_jni" ]
   java_targets = [
