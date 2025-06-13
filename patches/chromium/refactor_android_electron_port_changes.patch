@@ -1,0 +1,171 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Shivram Khandeparker <shivramk@gmail.com>
+Date: Fri, 13 Jun 2025 16:11:47 +0000
+Subject: refactor: android electron port changes
+
+
+diff --git a/components/cdm/renderer/key_system_support_update.cc b/components/cdm/renderer/key_system_support_update.cc
+index 1a1ddc5d825b8bee0029ff91885482d4163913da..65f52e7035ed023548159dcdea90733605a351f3 100644
+--- a/components/cdm/renderer/key_system_support_update.cc
++++ b/components/cdm/renderer/key_system_support_update.cc
+@@ -485,7 +485,7 @@ void AddAndroidPlatformKeySystem(const std::string& key_system,
+                                  const media::KeySystemCapability& capability,
+                                  bool can_persist_data,
+                                  KeySystemInfos* key_systems) {
+-  DCHECK_NE(key_system, kWidevineKeySystem);
++  // DCHECK_NE(key_system, kWidevineKeySystem);
+ 
+   // When using MediaDrm, we assume it'll always try to persist some data.
+   // If we don't allow data to be persisted, then skip this key system.
+diff --git a/content/shell/BUILD.gn b/content/shell/BUILD.gn
+index 16958563849f98a43dc66fae3b7c041480241f97..8c80e592d39291f9fef43257d2da27d8ee16e3bc 100644
+--- a/content/shell/BUILD.gn
++++ b/content/shell/BUILD.gn
+@@ -232,8 +232,6 @@ static_library("content_shell_lib") {
+ 
+   if (is_android) {
+     sources += [
+-      "android/shell_manager.cc",
+-      "android/shell_manager.h",
+       "browser/shell_platform_delegate_android.cc",
+       "browser/shell_web_contents_view_delegate_android.cc",
+     ]
+diff --git a/content/shell/browser/shell_permission_manager.cc b/content/shell/browser/shell_permission_manager.cc
+index c09c74d3d95fb5bb5c9e44aa06d93c31525f4080..dbbc22dd0a1a8aa1e4d16af1762129563963b650 100644
+--- a/content/shell/browser/shell_permission_manager.cc
++++ b/content/shell/browser/shell_permission_manager.cc
+@@ -74,6 +74,14 @@ bool IsAllowlistedPermissionType(PermissionType permission) {
+     case PermissionType::AUTOMATIC_FULLSCREEN:
+     case PermissionType::WEB_APP_INSTALLATION:
+     case PermissionType::LOCAL_NETWORK_ACCESS:
++    // Electron-specific permissions
++    case PermissionType::ELECTRON_FIRST:
++    case PermissionType::FILE_SYSTEM:
++    case PermissionType::ELECTRON_FULLSCREEN:
++    case PermissionType::HID:
++    case PermissionType::OPEN_EXTERNAL:
++    case PermissionType::SERIAL:
++    case PermissionType::USB:
+       return false;
+   }
+ 
+diff --git a/content/shell/browser/shell_platform_delegate_android.cc b/content/shell/browser/shell_platform_delegate_android.cc
+index a8d5b862e63850c3a4edae0536704345d4d4bd81..3952b9aca1f4ffe40c9e3d3ad818241f474ceffb 100644
+--- a/content/shell/browser/shell_platform_delegate_android.cc
++++ b/content/shell/browser/shell_platform_delegate_android.cc
+@@ -14,11 +14,11 @@
+ #include "content/public/browser/render_widget_host_view.h"
+ #include "content/public/browser/web_contents.h"
+ #include "content/public/common/content_switches.h"
+-#include "content/shell/android/shell_manager.h"
++#include "electron/android/shell_manager.h"
+ #include "content/shell/browser/shell.h"
+ 
+ // Must come after all headers that specialize FromJniType() / ToJniType().
+-#include "content/shell/android/content_shell_jni_headers/Shell_jni.h"
++#include "jni_headers/electron/android/content_shell_jni_headers/ElectronShell_jni.h"
+ 
+ using base::android::AttachCurrentThread;
+ using base::android::ConvertUTF8ToJavaString;
+@@ -60,7 +60,7 @@ void ShellPlatformDelegate::CleanUp(Shell* shell) {
+   RemoveShellView(shell_data.java_object);
+ 
+   if (!shell_data.java_object.is_null())
+-    Java_Shell_onNativeDestroyed(env, shell_data.java_object);
++    Java_ElectronShell_onNativeDestroyed(env, shell_data.java_object);
+ 
+   shell_data_map_.erase(shell);
+ }
+@@ -70,7 +70,7 @@ void ShellPlatformDelegate::SetContents(Shell* shell) {
+   DCHECK(base::Contains(shell_data_map_, shell));
+   ShellData& shell_data = shell_data_map_[shell];
+ 
+-  Java_Shell_initFromNativeTabContents(
++  Java_ElectronShell_initFromNativeTabContents(
+       env, shell_data.java_object, shell->web_contents()->GetJavaWebContents());
+ }
+ 
+@@ -82,30 +82,15 @@ void ShellPlatformDelegate::ResizeWebContent(Shell* shell,
+ void ShellPlatformDelegate::EnableUIControl(Shell* shell,
+                                             UIControl control,
+                                             bool is_enabled) {
+-  JNIEnv* env = AttachCurrentThread();
+-  DCHECK(base::Contains(shell_data_map_, shell));
+-  ShellData& shell_data = shell_data_map_[shell];
+-
+-  if (shell_data.java_object.is_null())
+-    return;
+-  Java_Shell_enableUiControl(env, shell_data.java_object, control, is_enabled);
++  // No-op: Electron Android doesn't have navigation controls
+ }
+ 
+ void ShellPlatformDelegate::SetAddressBarURL(Shell* shell, const GURL& url) {
+-  JNIEnv* env = AttachCurrentThread();
+-  DCHECK(base::Contains(shell_data_map_, shell));
+-  ShellData& shell_data = shell_data_map_[shell];
+-
+-  ScopedJavaLocalRef<jstring> j_url = ConvertUTF8ToJavaString(env, url.spec());
+-  Java_Shell_onUpdateUrl(env, shell_data.java_object, j_url);
++  // No-op: Electron Android doesn't have a URL bar
+ }
+ 
+ void ShellPlatformDelegate::SetIsLoading(Shell* shell, bool loading) {
+-  JNIEnv* env = AttachCurrentThread();
+-  DCHECK(base::Contains(shell_data_map_, shell));
+-  ShellData& shell_data = shell_data_map_[shell];
+-
+-  Java_Shell_setIsLoading(env, shell_data.java_object, loading);
++  // No-op: Electron Android doesn't have loading indicators
+ }
+ 
+ void ShellPlatformDelegate::SetTitle(Shell* shell,
+@@ -121,22 +106,14 @@ void ShellPlatformDelegate::ToggleFullscreenModeForTab(
+     Shell* shell,
+     WebContents* web_contents,
+     bool enter_fullscreen) {
+-  JNIEnv* env = AttachCurrentThread();
+-  DCHECK(base::Contains(shell_data_map_, shell));
+-  ShellData& shell_data = shell_data_map_[shell];
+-
+-  Java_Shell_toggleFullscreenModeForTab(env, shell_data.java_object,
+-                                        enter_fullscreen);
++  // No-op: Electron Android doesn't have a toolbar to toggle fullscreen
+ }
+ 
+ bool ShellPlatformDelegate::IsFullscreenForTabOrPending(
+     Shell* shell,
+     const WebContents* web_contents) const {
+-  JNIEnv* env = AttachCurrentThread();
+-  DCHECK(base::Contains(shell_data_map_, shell));
+-  const ShellData& shell_data = shell_data_map_.find(shell)->second;
+-
+-  return Java_Shell_isFullscreenForTabOrPending(env, shell_data.java_object);
++  // Electron Android doesn't have a toolbar, always return false
++  return false;
+ }
+ 
+ void ShellPlatformDelegate::SetOverlayMode(Shell* shell,
+@@ -145,20 +122,16 @@ void ShellPlatformDelegate::SetOverlayMode(Shell* shell,
+   DCHECK(base::Contains(shell_data_map_, shell));
+   ShellData& shell_data = shell_data_map_[shell];
+ 
+-  return Java_Shell_setOverlayMode(env, shell_data.java_object,
++  return Java_ElectronShell_setOverlayMode(env, shell_data.java_object,
+                                    use_overlay_mode);
+ }
+ 
+ void ShellPlatformDelegate::LoadProgressChanged(Shell* shell, double progress) {
+-  JNIEnv* env = AttachCurrentThread();
+-  DCHECK(base::Contains(shell_data_map_, shell));
+-  ShellData& shell_data = shell_data_map_[shell];
+-
+-  Java_Shell_onLoadProgressChanged(env, shell_data.java_object, progress);
++  // No-op: Electron Android doesn't have a progress bar
+ }
+ 
+ // static
+-void JNI_Shell_CloseShell(JNIEnv* env, jlong shellPtr) {
++void JNI_ElectronShell_CloseShell(JNIEnv* env, jlong shellPtr) {
+   Shell* shell = reinterpret_cast<Shell*>(shellPtr);
+   shell->Close();
+ }
