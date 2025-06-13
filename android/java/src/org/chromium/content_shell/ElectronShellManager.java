@@ -22,6 +22,7 @@ import org.chromium.components.embedder_support.view.ContentViewRenderView;
 import org.chromium.content_public.browser.Visibility;
 import org.chromium.content_public.browser.WebContents;
 import org.chromium.ui.base.WindowAndroid;
+import org.electronjs.ElectronShell;
 
 /** Container and generator of ShellViews. */
 @JNINamespace("content")

@@ -6,7 +6,7 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -->
 
-<org.chromium.content_shell.ElectronShell
+<org.electronjs.ElectronShell
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/container"
     android:layout_width="match_parent"
@@ -15,4 +15,4 @@ found in the LICENSE file.
     <FrameLayout android:id="@+id/contentview_holder"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-</org.chromium.content_shell.ElectronShell>
+</org.electronjs.ElectronShell>
