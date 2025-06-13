@@ -52,7 +52,7 @@ base::win::ScopedHandle GetLogInheritedHandle(
 }
 #endif
 
-base::FilePath GetLogFileName(const base::CommandLine& command_line) {
+base::FilePath GetElectronLogFileName(const base::CommandLine& command_line) {
   std::string filename = command_line.GetSwitchValueASCII(switches::kLogFile);
   if (filename.empty())
     filename = base::Environment::Create()->GetVar(kLogFileName).value_or("");
@@ -173,7 +173,7 @@ void InitElectronLogging(const base::CommandLine& command_line,
       }
 #endif
     } else {
-      log_path = GetLogFileName(command_line);
+      log_path = GetElectronLogFileName(command_line);
     }
   } else {
     log_locking_state = DONT_LOCK_LOG_FILE;

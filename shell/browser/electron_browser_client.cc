@@ -794,7 +794,7 @@ void ElectronBrowserClient::GetMediaDeviceIDSalt(
 
 base::FilePath ElectronBrowserClient::GetLoggingFileName(
     const base::CommandLine& cmd_line) {
-  return logging::GetLogFileName(cmd_line);
+  return logging::GetElectronLogFileName(cmd_line);
 }
 
 std::unique_ptr<net::ClientCertStore>

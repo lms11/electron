@@ -557,6 +557,17 @@ source_set("electron_lib") {
   deps += [ "//electron/build/config:generate_mas_config" ]
 
   sources = filenames.lib_sources
+  
+  # Android: exclude files that conflict with blink platform and chrome
+  if (is_android) {
+    # TODO (shivramk): Fix this properly by removing these from all builds
+    # they are already being included in the blink library through a patch
+    sources -= [
+      "shell/renderer/electron_smooth_round_rect.cc",
+      "shell/renderer/electron_smooth_round_rect.h",
+    ]
+  }
+  
   if (is_win) {
     sources += filenames.lib_sources_win
   }

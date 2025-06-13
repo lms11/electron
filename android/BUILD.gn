@@ -24,7 +24,7 @@ shared_library_with_jni("libelectron_content_view") {
     "//components/crash/content/browser",
     "//content/shell:content_shell_app",
     "//content/shell:content_shell_lib",
-    "//content/shell:pak",
+    "//electron:electron_lib",
     "//media",
     "//skia",
   ]

@@ -75,8 +75,6 @@ static_library("chrome") {
     "//chrome/browser/process_singleton_internal.h",
     "//chrome/browser/serial/serial_blocklist.cc",
     "//chrome/browser/serial/serial_blocklist.h",
-    "//chrome/browser/ui/color/chrome_color_mixers.cc",
-    "//chrome/browser/ui/color/chrome_color_mixers.h",
     "//chrome/browser/ui/frame/window_frame_util.cc",
     "//chrome/browser/ui/frame/window_frame_util.h",
     "//chrome/browser/ui/ui_features.cc",
@@ -88,9 +86,17 @@ static_library("chrome") {
     "//chrome/browser/usb/usb_blocklist.h",
     "//extensions/browser/app_window/size_constraints.cc",
     "//extensions/browser/app_window/size_constraints.h",
-    "//ui/base/accelerators/global_accelerator_listener/global_accelerator_listener.cc",
-    "//ui/base/accelerators/global_accelerator_listener/global_accelerator_listener.h",
   ]
+  
+  if (!is_android) {
+    sources += [
+      "//chrome/browser/ui/color/chrome_color_mixers.cc",
+      "//chrome/browser/ui/color/chrome_color_mixers.h",
+      # TODO (shivramk) : Can we remove this for all platforms,, given we link to the library?
+      "//ui/base/accelerators/global_accelerator_listener/global_accelerator_listener.cc",
+      "//ui/base/accelerators/global_accelerator_listener/global_accelerator_listener.h",
+    ]
+  }
 
   if (is_posix && !is_android) {
     sources += [ "//chrome/browser/process_singleton_posix.cc" ]
@@ -143,9 +149,12 @@ static_library("chrome") {
     "//components/enterprise/obfuscation/core:enterprise_obfuscation",
     "//components/safe_browsing/core/browser/db:safebrowsing_proto",
     "//components/vector_icons:vector_icons",
-    "//ui/base/accelerators/global_accelerator_listener",
     "//ui/snapshot",
   ]
+  
+  if (!is_android) {
+    deps += [ "//ui/base/accelerators/global_accelerator_listener" ]
+  }
 
   if (use_aura) {
     sources += [
