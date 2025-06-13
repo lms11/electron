@@ -21,7 +21,7 @@ import org.chromium.content_public.browser.DeviceUtils;
 import org.chromium.content_public.browser.Visibility;
 import org.chromium.content_public.browser.WebContents;
 import org.electronjs.ElectronShell;
-import org.chromium.content_shell.ElectronShellManager;
+import org.electronjs.ElectronShellManager;
 import org.electronjs.apk.AssetExtractor;
 import org.chromium.ui.base.ActivityWindowAndroid;
 import org.chromium.ui.base.IntentRequestTracker;

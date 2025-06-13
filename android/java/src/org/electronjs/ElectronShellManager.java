@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package org.chromium.content_shell;
+package org.electronjs;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -23,6 +23,8 @@ import org.chromium.content_public.browser.Visibility;
 import org.chromium.content_public.browser.WebContents;
 import org.chromium.ui.base.WindowAndroid;
 import org.electronjs.ElectronShell;
+
+import org.chromium.content_shell.R;
 
 /** Container and generator of ShellViews. */
 @JNINamespace("content")
