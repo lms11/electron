@@ -36,7 +36,6 @@
 #include "shell/browser/electron_gpu_client.h"
 #if BUILDFLAG(IS_ANDROID)
 #include "content/shell/browser/shell_content_browser_client.h"
-#include "content/shell/common/shell_content_client.h"
 #include "content/shell/renderer/shell_content_renderer_client.h"
 #include "content/shell/utility/shell_content_utility_client.h"
 #else
@@ -410,7 +409,7 @@ void ElectronMainDelegate::PreSandboxStartup() {
 #endif
 
 #if BUILDFLAG(IS_ANDROID)
-  // On Android, initialize resources first for all processes - this must happen 
+  // On Android, initialize resources first for all processes - this must happen
   // before any other resource loading attempts as it sets up file descriptors
   InitializeResourcesOnAndroid();
 #endif
@@ -527,11 +526,7 @@ std::string_view ElectronMainDelegate::GetBrowserV8SnapshotFilename() {
 }
 
 content::ContentClient* ElectronMainDelegate::CreateContentClient() {
-#if BUILDFLAG(IS_ANDROID)
-  content_client_ = std::make_unique<content::ShellContentClient>();
-#else
   content_client_ = std::make_unique<ElectronContentClient>();
-#endif
   return content_client_.get();
 }
 
@@ -589,7 +584,8 @@ std::variant<int, content::MainFunctionParams> ElectronMainDelegate::RunProcess(
   // unwinds. So here we only create (and leak) a BrowserMainRunner. The
   // shutdown of BrowserMainRunner doesn't happen in Chrome Android/iOS and
   // doesn't work properly on Android/iOS at all.
-  std::unique_ptr<content::BrowserMainRunner> main_runner = content::BrowserMainRunner::Create();
+  std::unique_ptr<content::BrowserMainRunner> main_runner =
+      content::BrowserMainRunner::Create();
   // In browser tests, the |main_function_params| contains a |ui_task| which
   // will execute the testing. The task will be executed synchronously inside
   // Initialize() so we don't depend on the BrowserMainRunner being Run().
