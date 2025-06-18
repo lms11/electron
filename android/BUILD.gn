@@ -28,6 +28,8 @@ shared_library_with_jni("libelectron_content_view") {
     "//media",
     "//skia",
   ]
+  
+  ldflags = [ "-Wl,--error-limit=0" ]
 
   # Explicit dependency required for JNI registration to be able to
   # find the native side functions.

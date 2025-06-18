@@ -33,8 +33,15 @@
 #include "services/tracing/public/cpp/stack_sampling/tracing_sampler_profiler.h"
 #include "shell/app/command_line_args.h"
 #include "shell/app/electron_content_client.h"
-#include "shell/browser/electron_browser_client.h"
 #include "shell/browser/electron_gpu_client.h"
+#if BUILDFLAG(IS_ANDROID)
+#include "content/shell/browser/shell_content_browser_client.h"
+#include "content/shell/common/shell_content_client.h"
+#include "content/shell/renderer/shell_content_renderer_client.h"
+#include "content/shell/utility/shell_content_utility_client.h"
+#else
+#include "shell/browser/electron_browser_client.h"
+#endif
 #include "shell/browser/feature_list.h"
 #include "shell/browser/relauncher.h"
 #include "shell/common/application_info.h"
@@ -66,6 +73,15 @@
 #include "v8/include/v8.h"
 #endif
 
+#if BUILDFLAG(IS_ANDROID)
+#include "base/android/apk_assets.h"
+#include "base/posix/global_descriptors.h"
+#include "content/public/browser/android/compositor.h"
+#include "content/public/browser/browser_main_runner.h"
+#include "content/shell/android/shell_descriptors.h"
+#include "content/shell/common/shell_paths.h"
+#endif
+
 #if !IS_MAS_BUILD()
 #include "components/crash/core/app/crash_switches.h"  // nogncheck
 #include "components/crash/core/app/crashpad.h"        // nogncheck
@@ -80,7 +96,9 @@ namespace electron {
 
 namespace {
 
+#if !BUILDFLAG(IS_ANDROID)
 constexpr std::string_view kRelauncherProcess = "relauncher";
+#endif
 
 constexpr base::cstring_view kElectronDisableSandbox{
     "ELECTRON_DISABLE_SANDBOX"};
@@ -210,7 +228,45 @@ void RegisterPathProvider() {
 
 }  // namespace
 
+#if BUILDFLAG(IS_ANDROID)
+void InitializeResourcesOnAndroid() {
+  // On Android, the renderer runs with a different UID and can never access
+  // the file system. Use the file descriptor passed in at launch time.
+  auto* global_descriptors = base::GlobalDescriptors::GetInstance();
+  int pak_fd = global_descriptors->MaybeGet(kShellPakDescriptor);
+  base::MemoryMappedFile::Region pak_region;
+  if (pak_fd >= 0) {
+    pak_region = global_descriptors->GetRegion(kShellPakDescriptor);
+  } else {
+    pak_fd =
+        base::android::OpenApkAsset("assets/content_shell.pak", &pak_region);
+    // Loaded from disk for browsertests.
+    if (pak_fd < 0) {
+      base::FilePath pak_file;
+      bool r = base::PathService::Get(base::DIR_ANDROID_APP_DATA, &pak_file);
+      DCHECK(r);
+      pak_file = pak_file.Append(FILE_PATH_LITERAL("paks"));
+      pak_file = pak_file.Append(FILE_PATH_LITERAL("content_shell.pak"));
+      int flags = base::File::FLAG_OPEN | base::File::FLAG_READ;
+      pak_fd = base::File(pak_file, flags).TakePlatformFile();
+      pak_region = base::MemoryMappedFile::Region::kWholeFile;
+    }
+    global_descriptors->Set(kShellPakDescriptor, pak_fd, pak_region);
+  }
+  DCHECK_GE(pak_fd, 0);
+  // TODO(crbug.com/40346051): A better way to prevent fdsan error from a double
+  // close is to refactor GlobalDescriptors.{Get,MaybeGet} to return
+  // "const base::File&" rather than fd itself.
+  base::File android_pak_file(pak_fd);
+  ui::ResourceBundle::InitSharedInstanceWithPakFileRegion(
+      android_pak_file.Duplicate(), pak_region);
+  ui::ResourceBundle::GetSharedInstance().AddDataPackFromFileRegion(
+      std::move(android_pak_file), pak_region, ui::k100Percent);
+}
+#endif
+
 std::string LoadResourceBundle(const std::string& locale) {
+#if !BUILDFLAG(IS_ANDROID)
   const bool initialized = ui::ResourceBundle::HasSharedInstance();
   DCHECK(!initialized);
 
@@ -229,6 +285,9 @@ std::string LoadResourceBundle(const std::string& locale) {
   bundle.AddDataPackFromPath(pak_dir.Append(FILE_PATH_LITERAL("resources.pak")),
                              ui::kScaleFactorNone);
   return loaded_locale;
+#else
+  return "";
+#endif
 }
 
 ElectronMainDelegate::ElectronMainDelegate() = default;
@@ -273,6 +332,11 @@ std::optional<int> ElectronMainDelegate::BasicStartupComplete() {
       kNonWildcardDomainNonPortSchemes, kNonWildcardDomainNonPortSchemesSize);
 #endif
 
+#if BUILDFLAG(IS_ANDROID)
+  // Initialize the Android compositor for the browser process
+  content::Compositor::Initialize();
+#endif
+
 #if BUILDFLAG(IS_WIN)
   // Ignore invalid parameter errors.
   _set_invalid_parameter_handler(InvalidParameterHandler);
@@ -290,6 +354,13 @@ std::optional<int> ElectronMainDelegate::BasicStartupComplete() {
     LOG(FATAL) << "Running as root without --"
                << sandbox::policy::switches::kNoSandbox
                << " is not supported. See https://crbug.com/638180.";
+#endif
+
+#if BUILDFLAG(IS_ANDROID)
+  // TODO(shivramk): This is needed because we're using Shell's browser client
+  // on Android. We should implement proper Electron path handling for Android
+  // instead of relying on Shell's implementation.
+  content::RegisterShellPathProvider();
 #endif
 
 #if IS_MAS_BUILD()
@@ -336,6 +407,12 @@ void ElectronMainDelegate::PreSandboxStartup() {
 
 #if !IS_MAS_BUILD()
   crash_reporter::InitializeCrashKeys();
+#endif
+
+#if BUILDFLAG(IS_ANDROID)
+  // On Android, initialize resources first for all processes - this must happen 
+  // before any other resource loading attempts as it sets up file descriptors
+  InitializeResourcesOnAndroid();
 #endif
 
   // Initialize ResourceBundle which handles files loaded from external
@@ -394,13 +471,40 @@ void ElectronMainDelegate::SandboxInitialized(const std::string& process_type) {
 #endif
 }
 
+std::optional<int> ElectronMainDelegate::PostEarlyInitialization(
+    InvokedIn invoked_in) {
+  if (!ShouldCreateFeatureList(invoked_in)) {
+    // Apply field trial testing configuration since content did not.
+#if BUILDFLAG(IS_ANDROID)
+    static_cast<content::ShellContentBrowserClient*>(browser_client_.get())
+        ->CreateFeatureListAndFieldTrials();
+#else
+    static_cast<ElectronBrowserClient*>(browser_client_.get())
+        ->CreateFeatureListAndFieldTrials();
+#endif
+  }
+  if (!ShouldInitializeMojo(invoked_in)) {
+    content::InitializeMojoCore();
+  }
+
+  // Note: Skipping memory_system initialization from ShellMainDelegate
+  // as requested.
+
+  return std::nullopt;
+}
+
 std::optional<int> ElectronMainDelegate::PreBrowserMain() {
+  std::optional<int> exit_code = content::ContentMainDelegate::PreBrowserMain();
+  if (exit_code.has_value())
+    return exit_code;
+#if 0
   // This is initialized early because the service manager reads some feature
   // flags and we need to make sure the feature list is initialized before the
   // service manager reads the features.
   InitializeFeatureList();
   // Initialize mojo core as soon as we have a valid feature list
   content::InitializeMojoCore();
+#endif
 #if BUILDFLAG(IS_MAC)
   RegisterAtomCrApp();
 #endif
@@ -423,13 +527,21 @@ std::string_view ElectronMainDelegate::GetBrowserV8SnapshotFilename() {
 }
 
 content::ContentClient* ElectronMainDelegate::CreateContentClient() {
+#if BUILDFLAG(IS_ANDROID)
+  content_client_ = std::make_unique<content::ShellContentClient>();
+#else
   content_client_ = std::make_unique<ElectronContentClient>();
+#endif
   return content_client_.get();
 }
 
 content::ContentBrowserClient*
 ElectronMainDelegate::CreateContentBrowserClient() {
+#if BUILDFLAG(IS_ANDROID)
+  browser_client_ = std::make_unique<content::ShellContentBrowserClient>();
+#else
   browser_client_ = std::make_unique<ElectronBrowserClient>();
+#endif
   return browser_client_.get();
 }
 
@@ -440,6 +552,9 @@ content::ContentGpuClient* ElectronMainDelegate::CreateContentGpuClient() {
 
 content::ContentRendererClient*
 ElectronMainDelegate::CreateContentRendererClient() {
+#if BUILDFLAG(IS_ANDROID)
+  renderer_client_ = std::make_unique<content::ShellContentRendererClient>();
+#else
   auto* command_line = base::CommandLine::ForCurrentProcess();
 
   if (IsSandboxEnabled(command_line)) {
@@ -447,23 +562,52 @@ ElectronMainDelegate::CreateContentRendererClient() {
   } else {
     renderer_client_ = std::make_unique<ElectronRendererClient>();
   }
+#endif
 
   return renderer_client_.get();
 }
 
 content::ContentUtilityClient*
 ElectronMainDelegate::CreateContentUtilityClient() {
+#if BUILDFLAG(IS_ANDROID)
+  utility_client_ = std::make_unique<content::ShellContentUtilityClient>(false);
+#else
   utility_client_ = std::make_unique<ElectronContentUtilityClient>();
+#endif
   return utility_client_.get();
 }
 
 std::variant<int, content::MainFunctionParams> ElectronMainDelegate::RunProcess(
     const std::string& process_type,
     content::MainFunctionParams main_function_params) {
+#if BUILDFLAG(IS_ANDROID) || BUILDFLAG(IS_IOS)
+  // For non-browser process, return and have the caller run the main loop.
+  if (!process_type.empty())
+    return std::move(main_function_params);
+
+  // On Android and iOS, we defer to the system message loop when the stack
+  // unwinds. So here we only create (and leak) a BrowserMainRunner. The
+  // shutdown of BrowserMainRunner doesn't happen in Chrome Android/iOS and
+  // doesn't work properly on Android/iOS at all.
+  std::unique_ptr<content::BrowserMainRunner> main_runner = content::BrowserMainRunner::Create();
+  // In browser tests, the |main_function_params| contains a |ui_task| which
+  // will execute the testing. The task will be executed synchronously inside
+  // Initialize() so we don't depend on the BrowserMainRunner being Run().
+  int initialize_exit_code =
+      main_runner->Initialize(std::move(main_function_params));
+  DCHECK_LT(initialize_exit_code, 0)
+      << "BrowserMainRunner::Initialize failed in ShellMainDelegate";
+  std::ignore = main_runner.release();
+  // Return 0 as BrowserMain() should not be called after this, bounce up to
+  // the system message loop for ContentShell, and we're already done thanks
+  // to the |ui_task| for browser tests.
+  return 0;
+#else
   if (process_type == kRelauncherProcess)
     return relauncher::RelauncherMain(main_function_params);
   else
     return std::move(main_function_params);
+#endif
 }
 
 bool ElectronMainDelegate::ShouldCreateFeatureList(InvokedIn invoked_in) {
