@@ -55,6 +55,7 @@ void LoginHandler::EmitEvent(
   v8::HandleScope scope(isolate);
 
   raw_ptr<api::WebContents> api_web_contents = nullptr;
+#if !BUILDFLAG(IS_ANDROID)
   if (web_contents) {
     api_web_contents = api::WebContents::From(web_contents);
     if (!api_web_contents) {
@@ -62,6 +63,13 @@ void LoginHandler::EmitEvent(
       return;
     }
   }
+#else
+  // TODO(android): Implement WebContents API for Android
+  if (web_contents) {
+    std::move(auth_required_callback_).Run(std::nullopt);
+    return;
+  }
+#endif
 
   auto details = gin::Dictionary::CreateEmpty(isolate);
   details.Set("url", url);
@@ -83,10 +91,15 @@ void LoginHandler::EmitEvent(
                                base::BindOnce(&LoginHandler::CallbackFromJS,
                                               weak_factory_.GetWeakPtr()));
   } else {
+#if !BUILDFLAG(IS_ANDROID)
     default_prevented =
         api::App::Get()->Emit("login", nullptr, std::move(details), auth_info,
                               base::BindOnce(&LoginHandler::CallbackFromJS,
                                              weak_factory_.GetWeakPtr()));
+#else
+    // TODO(android): Handle app-level login events
+    default_prevented = false;
+#endif
   }
   // ⚠️ NB, if CallbackFromJS is called during Emit(), |this| will have been
   // deleted. Check the weak ptr before accessing any member variables to

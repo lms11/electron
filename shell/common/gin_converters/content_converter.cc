@@ -267,7 +267,12 @@ v8::Local<v8::Value> Converter<content::WebContents*>::ToV8(
     content::WebContents* val) {
   if (!val)
     return v8::Null(isolate);
+#if !BUILDFLAG(IS_ANDROID)
   return electron::api::WebContents::FromOrCreate(isolate, val).ToV8();
+#else
+  // TODO(android): Implement WebContents conversion for Android
+  return v8::Null(isolate);
+#endif
 }
 
 // static
@@ -276,6 +281,7 @@ bool Converter<content::WebContents*>::FromV8(v8::Isolate* isolate,
                                               content::WebContents** out) {
   if (!val->IsObject())
     return false;
+#if !BUILDFLAG(IS_ANDROID)
   // gin's unwrapping converter doesn't expect the pointer inside to ever be
   // nullptr, so we check here first before attempting to unwrap.
   if (gin_helper::Destroyable::IsDestroyed(val.As<v8::Object>()))
@@ -286,6 +292,10 @@ bool Converter<content::WebContents*>::FromV8(v8::Isolate* isolate,
 
   *out = web_contents->web_contents();
   return true;
+#else
+  // TODO(android): Implement WebContents conversion for Android
+  return false;
+#endif
 }
 
 // static

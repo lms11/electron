@@ -203,17 +203,25 @@ ElectronDownloadManagerDelegate::~ElectronDownloadManagerDelegate() {
 void ElectronDownloadManagerDelegate::GetItemSavePath(
     download::DownloadItem* item,
     base::FilePath* path) {
+#if !BUILDFLAG(IS_ANDROID)
   api::DownloadItem* download = api::DownloadItem::FromDownloadItem(item);
   if (download)
     *path = download->GetSavePath();
+#else
+  // TODO(android): Implement download path handling for Android
+#endif
 }
 
 void ElectronDownloadManagerDelegate::GetItemSaveDialogOptions(
     download::DownloadItem* item,
     file_dialog::DialogSettings* options) {
+#if !BUILDFLAG(IS_ANDROID)
   api::DownloadItem* download = api::DownloadItem::FromDownloadItem(item);
   if (download)
     *options = download->GetSaveDialogOptions();
+#else
+  // TODO(android): Implement download dialog options for Android
+#endif
 }
 
 void ElectronDownloadManagerDelegate::OnDownloadPathGenerated(
@@ -223,6 +231,7 @@ void ElectronDownloadManagerDelegate::OnDownloadPathGenerated(
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
   ScopedAllowBlockingForElectron allow_blocking;
 
+#if !BUILDFLAG(IS_ANDROID)
   auto* item = download_manager_->GetDownloadByGuid(download_guid);
   if (!item)
     return;
@@ -282,6 +291,7 @@ void ElectronDownloadManagerDelegate::OnDownloadPathGenerated(
 
     std::move(callback).Run(std::move(target_info));
   }
+#endif
 }
 
 void ElectronDownloadManagerDelegate::OnDownloadSaveDialogDone(
@@ -303,9 +313,13 @@ void ElectronDownloadManagerDelegate::OnDownloadSaveDialogDone(
       // Remember the last selected download directory.
       last_saved_directory_ = path.DirName();
 
+#if !BUILDFLAG(IS_ANDROID)
       api::DownloadItem* download = api::DownloadItem::FromDownloadItem(item);
       if (download)
         download->SetSavePath(path);
+#else
+      // TODO(android): Handle download save path for Android
+#endif
     }
   }
 

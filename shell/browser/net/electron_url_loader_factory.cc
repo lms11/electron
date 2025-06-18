@@ -670,11 +670,16 @@ void ElectronURLLoaderFactory::StartLoadingHttp(
       request->method != net::HttpRequestHeaders::kHeadMethod)
     dict.Get("uploadData", &upload_data);
 
+#if !BUILDFLAG(IS_ANDROID)
   gin::Handle<api::Session> session;
   auto* browser_context =
       dict.Get("session", &session) && !session.IsEmpty()
           ? session->browser_context()
           : ElectronBrowserContext::GetDefaultBrowserContext();
+#else
+  // TODO(android): Implement session handling for Android
+  auto* browser_context = ElectronBrowserContext::GetDefaultBrowserContext();
+#endif
 
   new URLPipeLoader(
       browser_context->GetURLLoaderFactory(), std::move(request),

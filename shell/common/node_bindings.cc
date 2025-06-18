@@ -50,6 +50,32 @@
 #include "shell/common/crash_keys.h"
 #endif
 
+#if BUILDFLAG(IS_ANDROID)
+#define ELECTRON_BROWSER_BINDINGS(V)      \
+  V(electron_browser_auto_updater)        \
+  V(electron_browser_content_tracing)     \
+  V(electron_browser_crash_reporter)      \
+  V(electron_browser_event_emitter)       \
+  V(electron_browser_in_app_purchase)     \
+  V(electron_browser_message_port)        \
+  V(electron_browser_native_theme)        \
+  V(electron_browser_notification)        \
+  V(electron_browser_power_monitor)       \
+  V(electron_browser_power_save_blocker)  \
+  V(electron_browser_protocol)            \
+  V(electron_browser_printing)            \
+  V(electron_browser_push_notifications)  \
+  V(electron_browser_safe_storage)        \
+  V(electron_browser_service_worker_main) \
+  V(electron_browser_screen)              \
+  V(electron_browser_system_preferences)  \
+  V(electron_browser_base_window)         \
+  V(electron_browser_utility_process)     \
+  V(electron_browser_web_frame_main)      \
+  V(electron_browser_web_view_manager)    \
+  V(electron_browser_window)              \
+  V(electron_common_net)
+#else
 #define ELECTRON_BROWSER_BINDINGS(V)      \
   V(electron_browser_app)                 \
   V(electron_browser_auto_updater)        \
@@ -85,6 +111,7 @@
   V(electron_browser_web_view_manager)    \
   V(electron_browser_window)              \
   V(electron_common_net)
+#endif
 
 #define ELECTRON_COMMON_BINDINGS(V)   \
   V(electron_common_asar)             \
@@ -93,8 +120,6 @@
   V(electron_common_crashpad_support) \
   V(electron_common_environment)      \
   V(electron_common_features)         \
-  V(electron_common_native_image)     \
-  V(electron_common_shell)            \
   V(electron_common_v8_util)
 
 #define ELECTRON_RENDERER_BINDINGS(V) \
@@ -414,7 +439,12 @@ void SetNodeOptions(base::Environment* env) {
       const std::vector<std::string_view> parts = base::SplitStringPiece(
           options, " ", base::TRIM_WHITESPACE, base::SPLIT_WANT_NONEMPTY);
 
+#if !BUILDFLAG(IS_ANDROID)
       bool is_packaged_app = electron::api::App::IsPackaged();
+#else
+      // TODO(android): Determine packaged app status for Android
+      bool is_packaged_app = false;
+#endif
 
       for (const std::string_view part : parts) {
         // Strip off values passed to individual NODE_OPTIONs
@@ -525,6 +555,11 @@ void NodeBindings::RegisterBuiltinBindings() {
     ELECTRON_BROWSER_BINDINGS(V)
   }
   ELECTRON_COMMON_BINDINGS(V)
+#if !BUILDFLAG(IS_ANDROID)
+  // These modules are not available on Android yet
+  V(electron_common_native_image)
+  V(electron_common_shell)
+#endif
   if (IsRendererProcess()) {
     ELECTRON_RENDERER_BINDINGS(V)
   }

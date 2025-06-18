@@ -988,9 +988,14 @@ ElectronBrowserClient::CreateDevToolsManagerDelegate() {
 }
 
 NotificationPresenter* ElectronBrowserClient::GetNotificationPresenter() {
+#if !BUILDFLAG(IS_ANDROID)
   if (!notification_presenter_)
     notification_presenter_ = NotificationPresenter::Create();
   return notification_presenter_.get();
+#else
+  // TODO(android): Implement notification support for Android
+  return nullptr;
+#endif
 }
 
 content::PlatformNotificationService*

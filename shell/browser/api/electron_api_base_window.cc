@@ -113,7 +113,11 @@ BaseWindow::BaseWindow(v8::Isolate* isolate,
       options, parent.IsEmpty() ? nullptr : parent->window_.get());
   window_->AddObserver(this);
 
+#if !BUILDFLAG(IS_ANDROID)
   SetContentView(View::Create(isolate));
+#else
+  // TODO(android): Implement content view handling for Android
+#endif
 
 #if defined(TOOLKIT_VIEWS)
   v8::Local<v8::Value> icon;
@@ -728,6 +732,8 @@ bool BaseWindow::IsFocusable() const {
 }
 
 void BaseWindow::SetMenu(v8::Isolate* isolate, v8::Local<v8::Value> value) {
+// TODO(android) - What do we do with menus on android?
+#if !BUILDFLAG(IS_ANDROID)
   auto context = isolate->GetCurrentContext();
   gin::Handle<Menu> menu;
   v8::Local<v8::Object> object;
@@ -748,11 +754,15 @@ void BaseWindow::SetMenu(v8::Isolate* isolate, v8::Local<v8::Value> value) {
     isolate->ThrowException(
         v8::Exception::TypeError(gin::StringToV8(isolate, "Invalid Menu")));
   }
+#endif
 }
 
 void BaseWindow::RemoveMenu() {
+// TODO(android) - What do we do with menus on android?
+#if !BUILDFLAG(IS_ANDROID)
   menu_.Reset();
   window_->SetMenu(nullptr);
+#endif
 }
 
 void BaseWindow::SetParentWindow(v8::Local<v8::Value> value,

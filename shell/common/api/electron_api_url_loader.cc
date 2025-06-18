@@ -698,6 +698,7 @@ gin::Handle<SimpleURLLoaderWrapper> SimpleURLLoaderWrapper::Create(
   }
 
   ElectronBrowserContext* browser_context = nullptr;
+#if !BUILDFLAG(IS_ANDROID)
   if (electron::IsBrowserProcess()) {
     std::string partition;
     gin::Handle<Session> session;
@@ -709,6 +710,9 @@ gin::Handle<SimpleURLLoaderWrapper> SimpleURLLoaderWrapper::Create(
     }
     browser_context = session->browser_context();
   }
+#else
+  // TODO(android): Implement session support for Android
+#endif
 
   auto ret = gin::CreateHandle(
       args->isolate(),

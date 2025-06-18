@@ -28,6 +28,7 @@ bool Converter<gfx::Image>::FromV8(v8::Isolate* isolate,
   if (val->IsNull())
     return true;
 
+#if !BUILDFLAG(IS_ANDROID)
   // First see if the user has passed a path.
   electron::api::NativeImage* native_image = nullptr;
   base::FilePath icon_path;
@@ -44,12 +45,21 @@ bool Converter<gfx::Image>::FromV8(v8::Isolate* isolate,
 
   *out = native_image->image();
   return true;
+#else
+  // TODO(android): Implement image conversion for Android
+  return false;
+#endif
 }
 
 v8::Local<v8::Value> Converter<gfx::Image>::ToV8(v8::Isolate* isolate,
                                                  const gfx::Image& val) {
+#if !BUILDFLAG(IS_ANDROID)
   return gin::ConvertToV8(isolate,
                           electron::api::NativeImage::Create(isolate, val));
+#else
+  // TODO(android): Implement image conversion for Android
+  return v8::Null(isolate);
+#endif
 }
 
 }  // namespace gin

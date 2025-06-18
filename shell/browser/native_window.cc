@@ -282,7 +282,11 @@ NativeWindow* NativeWindow::FromWidget(const views::Widget* widget) {
 }
 
 void NativeWindow::SetShape(const std::vector<gfx::Rect>& rects) {
+#if !BUILDFLAG(IS_ANDROID)
   widget()->SetShape(std::make_unique<std::vector<gfx::Rect>>(rects));
+#else
+  // TODO(android): Implement window shape for Android
+#endif
 }
 
 void NativeWindow::SetSize(const gfx::Size& size, bool animate) {
@@ -779,19 +783,33 @@ const views::Widget* NativeWindow::GetWidget() const {
 }
 
 std::string NativeWindow::GetTitle() const {
+#if !BUILDFLAG(IS_ANDROID)
   return base::UTF16ToUTF8(WidgetDelegate::GetWindowTitle());
+#else
+  // TODO(android): Implement window title handling for Android
+  return "";
+#endif
 }
 
 void NativeWindow::SetTitle(const std::string_view title) {
   if (title == GetTitle())
     return;
 
+#if !BUILDFLAG(IS_ANDROID)
   WidgetDelegate::SetTitle(base::UTF8ToUTF16(title));
   OnTitleChanged();
+#else
+  // TODO(android): Implement window title setting for Android
+  OnTitleChanged();
+#endif
 }
 
 void NativeWindow::SetAccessibleTitle(const std::string& title) {
+#if !BUILDFLAG(IS_ANDROID)
   WidgetDelegate::SetAccessibleTitle(base::UTF8ToUTF16(title));
+#else
+  // TODO(android): Implement accessible title for Android
+#endif
 }
 
 std::string NativeWindow::GetAccessibleTitle() {

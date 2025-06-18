@@ -37,7 +37,6 @@
 #if BUILDFLAG(IS_ANDROID)
 #include "content/shell/browser/shell_content_browser_client.h"
 #include "content/shell/renderer/shell_content_renderer_client.h"
-#include "content/shell/utility/shell_content_utility_client.h"
 #else
 #include "shell/browser/electron_browser_client.h"
 #endif
@@ -564,11 +563,7 @@ ElectronMainDelegate::CreateContentRendererClient() {
 
 content::ContentUtilityClient*
 ElectronMainDelegate::CreateContentUtilityClient() {
-#if BUILDFLAG(IS_ANDROID)
-  utility_client_ = std::make_unique<content::ShellContentUtilityClient>(false);
-#else
   utility_client_ = std::make_unique<ElectronContentUtilityClient>();
-#endif
   return utility_client_.get();
 }
 

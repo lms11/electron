@@ -78,6 +78,7 @@ class V8Serializer : public v8::ValueSerializer::Delegate {
 
   v8::Maybe<bool> WriteHostObject(v8::Isolate* isolate,
                                   v8::Local<v8::Object> object) override {
+#if !BUILDFLAG(IS_ANDROID)
     api::NativeImage* native_image;
     if (gin::ConvertFromV8(isolate, object, &native_image)) {
       // Serialize the NativeImage
@@ -97,6 +98,10 @@ class V8Serializer : public v8::ValueSerializer::Delegate {
     } else {
       return v8::ValueSerializer::Delegate::WriteHostObject(isolate, object);
     }
+#else
+    // TODO(android): Implement native image serialization for Android
+    return v8::ValueSerializer::Delegate::WriteHostObject(isolate, object);
+#endif
   }
 
   void ThrowDataCloneError(v8::Local<v8::String> message) override {
@@ -150,8 +155,12 @@ class V8Deserializer : public v8::ValueDeserializer::Delegate {
       return v8::ValueDeserializer::Delegate::ReadHostObject(isolate);
     switch (tag) {
       case kNativeImageTag:
+#if !BUILDFLAG(IS_ANDROID)
         if (api::NativeImage* native_image = ReadNativeImage(isolate))
           return native_image->GetWrapper(isolate);
+#else
+        // TODO(android): Implement native image deserialization for Android
+#endif
         break;
     }
     // Throws an exception.
@@ -217,7 +226,12 @@ class V8Deserializer : public v8::ValueDeserializer::Delegate {
       image_skia.AddRepresentation(gfx::ImageSkiaRep(bitmap, scale));
     }
     gfx::Image image(image_skia);
+#if !BUILDFLAG(IS_ANDROID)
     return new api::NativeImage(isolate, image);
+#else
+    // TODO(android): Implement NativeImage for Android
+    return nullptr;
+#endif
   }
 
   raw_ptr<v8::Isolate> isolate_;

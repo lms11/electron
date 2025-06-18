@@ -732,6 +732,7 @@ void FileSystemAccessPermissionContext::DidCheckPathAgainstBlocklist(
   }
 
   if (should_block) {
+#if !BUILDFLAG(IS_ANDROID)
     auto* session =
         electron::api::Session::FromBrowserContext(browser_context());
     v8::Isolate* isolate = JavascriptEnvironment::GetIsolate();
@@ -748,6 +749,11 @@ void FileSystemAccessPermissionContext::DidCheckPathAgainstBlocklist(
             &FileSystemAccessPermissionContext::OnRestrictedPathResult,
             weak_factory_.GetWeakPtr(), path_info.path));
     return;
+#else
+    // TODO(android): Handle file system access restrictions for Android
+    RunRestrictedPathCallback(path_info.path, SensitiveEntryResult::kAbort);
+    return;
+#endif
   }
 
   RunRestrictedPathCallback(path_info.path, SensitiveEntryResult::kAllowed);

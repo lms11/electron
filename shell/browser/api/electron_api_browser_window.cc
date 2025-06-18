@@ -64,6 +64,7 @@ BrowserWindow::BrowserWindow(gin::Arguments* args,
     web_preferences.Set(options::kShow, true);
 
   // Creates the WebContentsView.
+#if !BUILDFLAG(IS_ANDROID)
   gin::Handle<WebContentsView> web_contents_view =
       WebContentsView::Create(isolate, web_preferences);
   DCHECK(web_contents_view.get());
@@ -80,6 +81,9 @@ BrowserWindow::BrowserWindow(gin::Arguments* args,
 
   // Associate with BrowserWindow.
   web_contents->SetOwnerWindow(window());
+#else
+  // TODO(android): Implement WebContents handling for Android
+#endif
 
   InitWithArgs(args);
 
@@ -90,20 +94,28 @@ BrowserWindow::BrowserWindow(gin::Arguments* args,
   // See https://github.com/electron/electron/pull/41256.
   // Note that |GetContentsView|, confusingly, does not refer to the same thing
   // as |BaseWindow::GetContentView|.
+#if !BUILDFLAG(IS_ANDROID)
   window()->GetContentsView()->AddChildViewAt(web_contents_view->view(), 0);
   window()->GetContentsView()->DeprecatedLayoutImmediately();
+#else
+  // TODO(android): Implement content view installation for Android
+#endif
 
   // Init window after everything has been setup.
   window()->InitFromOptions(options);
 }
 
 BrowserWindow::~BrowserWindow() {
+#if !BUILDFLAG(IS_ANDROID)
   if (api_web_contents_) {
     // Cleanup the observers if user destroyed this instance directly instead of
     // gracefully closing content::WebContents.
     api_web_contents_->RemoveObserver(this);
     api_web_contents_->Destroy();
   }
+#else
+  // TODO(android): Handle WebContents cleanup for Android
+#endif
 }
 
 void BrowserWindow::BeforeUnloadDialogCancelled() {
@@ -150,6 +162,7 @@ void BrowserWindow::OnCloseButtonClicked(bool* prevent_default) {
   // first, and when the web page is closed the window will also be closed.
   *prevent_default = true;
 
+#if !BUILDFLAG(IS_ANDROID)
   // Already closed by renderer.
   if (!web_contents() || !api_web_contents_)
     return;
@@ -162,6 +175,9 @@ void BrowserWindow::OnCloseButtonClicked(bool* prevent_default) {
   } else {
     web_contents()->Close();
   }
+#else
+  // TODO(android): Handle close button behavior for Android
+#endif
 }
 
 void BrowserWindow::OnWindowBlur() {
@@ -172,6 +188,7 @@ void BrowserWindow::OnWindowBlur() {
 }
 
 void BrowserWindow::OnWindowFocus() {
+#if !BUILDFLAG(IS_ANDROID)
   // focus/blur events might be emitted while closing window.
   if (api_web_contents_) {
     web_contents()->RestoreFocus();
@@ -180,6 +197,9 @@ void BrowserWindow::OnWindowFocus() {
       web_contents()->Focus();
 #endif
   }
+#else
+  // TODO(android): Handle window focus for Android
+#endif
 
   BaseWindow::OnWindowFocus();
 }
@@ -219,21 +239,32 @@ void BrowserWindow::CloseImmediately() {
 }
 
 void BrowserWindow::Focus() {
+#if !BUILDFLAG(IS_ANDROID)
   if (api_web_contents_ && api_web_contents_->IsOffScreen())
     FocusOnWebView();
   else
     BaseWindow::Focus();
+#else
+  // TODO(android): Handle focus for Android
+  BaseWindow::Focus();
+#endif
 }
 
 void BrowserWindow::Blur() {
+#if !BUILDFLAG(IS_ANDROID)
   if (api_web_contents_ && api_web_contents_->IsOffScreen())
     BlurWebView();
   else
     BaseWindow::Blur();
+#else
+  // TODO(android): Handle blur for Android
+  BaseWindow::Blur();
+#endif
 }
 
 void BrowserWindow::SetBackgroundColor(const std::string& color_name) {
   BaseWindow::SetBackgroundColor(color_name);
+#if !BUILDFLAG(IS_ANDROID)
   SkColor color = ParseCSSColor(color_name);
   if (api_web_contents_) {
     api_web_contents_->SetBackgroundColor(color);
@@ -245,6 +276,9 @@ void BrowserWindow::SetBackgroundColor(const std::string& color_name) {
       web_preferences->SetBackgroundColor(ParseCSSColor(color_name));
     }
   }
+#else
+  // TODO(android): Handle background color for Android
+#endif
 }
 
 void BrowserWindow::FocusOnWebView() {
