@@ -36,7 +36,6 @@
 #include "shell/browser/electron_gpu_client.h"
 #if BUILDFLAG(IS_ANDROID)
 #include "content/shell/browser/shell_content_browser_client.h"
-#include "content/shell/renderer/shell_content_renderer_client.h"
 #else
 #include "shell/browser/electron_browser_client.h"
 #endif
@@ -546,9 +545,6 @@ content::ContentGpuClient* ElectronMainDelegate::CreateContentGpuClient() {
 
 content::ContentRendererClient*
 ElectronMainDelegate::CreateContentRendererClient() {
-#if BUILDFLAG(IS_ANDROID)
-  renderer_client_ = std::make_unique<content::ShellContentRendererClient>();
-#else
   auto* command_line = base::CommandLine::ForCurrentProcess();
 
   if (IsSandboxEnabled(command_line)) {
@@ -556,7 +552,6 @@ ElectronMainDelegate::CreateContentRendererClient() {
   } else {
     renderer_client_ = std::make_unique<ElectronRendererClient>();
   }
-#endif
 
   return renderer_client_.get();
 }
