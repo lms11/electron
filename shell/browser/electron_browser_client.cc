@@ -498,7 +498,15 @@ void ElectronBrowserClient::AppendExtraCommandLineSwitches(
                                child_path.AsUTF8Unsafe());
     SCOPED_CRASH_KEY_STRING256("ChildProcess", "program",
                                program.AsUTF8Unsafe());
+#if BUILDFLAG(IS_ANDROID)
+    // On Android, the program path may be empty since child processes are
+    // launched via app_process64 rather than separate executables
+    if (!program.empty()) {
+      CHECK_EQ(program, child_path);
+    }
+#else
     CHECK_EQ(program, child_path);
+#endif
 #endif
   }
 

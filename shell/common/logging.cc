@@ -27,7 +27,9 @@
 namespace logging {
 
 constexpr base::cstring_view kLogFileName{"ELECTRON_LOG_FILE"};
+#if !BUILDFLAG(IS_ANDROID)
 constexpr base::cstring_view kElectronEnableLogging{"ELECTRON_ENABLE_LOGGING"};
+#endif
 
 #if BUILDFLAG(IS_WIN)
 base::win::ScopedHandle GetLogInheritedHandle(
@@ -80,6 +82,10 @@ bool HasExplicitLogFile(const base::CommandLine& command_line) {
 std::pair<LoggingDestination, bool /* filename_is_handle */>
 DetermineLoggingDestination(const base::CommandLine& command_line,
                             bool is_preinit) {
+#if BUILDFLAG(IS_ANDROID)
+  // Force logging on Android for debugging
+  return {LOG_TO_SYSTEM_DEBUG_LOG | LOG_TO_STDERR, false};
+#else
   bool enable_logging = false;
   std::string logging_destination;
   if (command_line.HasSwitch(::switches::kEnableLogging)) {
@@ -93,8 +99,9 @@ DetermineLoggingDestination(const base::CommandLine& command_line,
       logging_destination = env->GetVar(kElectronEnableLogging).value();
     }
   }
-  if (!enable_logging)
+  if (!enable_logging) {
     return {LOG_NONE, false};
+  }
 
   bool also_log_to_stderr = false;
 #if !defined(NDEBUG)
@@ -130,6 +137,7 @@ DetermineLoggingDestination(const base::CommandLine& command_line,
       (logging_destination == "file" && !is_preinit))
     return {LOG_TO_FILE | (also_log_to_stderr ? LOG_TO_STDERR : 0), false};
   return {LOG_TO_SYSTEM_DEBUG_LOG | LOG_TO_STDERR, false};
+#endif  // BUILDFLAG(IS_ANDROID)
 }
 
 }  // namespace

@@ -1,3 +1,23 @@
+// For Android, redirect console to native logging
+if (process.platform === 'android') {
+  const util = require('util');
+  const v8Util = process._linkedBinding('electron_common_v8_util');
+  
+  const androidLog = (method: string) => (...args: any[]) => {
+    const message = util.format(...args);
+    // Use Chromium's logging which goes to logcat on Android
+    if (v8Util && (v8Util as any).log) {
+      (v8Util as any).log(`[JS-${method}] ${message}`);
+    }
+  };
+  
+  console.log = androidLog('LOG');
+  console.error = androidLog('ERROR');
+  console.warn = androidLog('WARN');
+  console.info = androidLog('INFO');
+}
+
+
 import type * as defaultMenuModule from '@electron/internal/browser/default-menu';
 
 import { EventEmitter } from 'events';
@@ -140,24 +160,27 @@ if (packageJson.v8Flags != null) {
 
 app.setAppPath(packagePath);
 
-// Load the chrome devtools support.
-require('@electron/internal/browser/devtools');
+// Skip loading modules that depend on native bindings on Android
+if (process.platform !== 'android') {
+  // Load the chrome devtools support.
+  require('@electron/internal/browser/devtools');
 
-// Load protocol module to ensure it is populated on app ready
-require('@electron/internal/browser/api/protocol');
+  // Load protocol module to ensure it is populated on app ready
+  require('@electron/internal/browser/api/protocol');
 
-// Load service-worker-main module to ensure it is populated on app ready
-require('@electron/internal/browser/api/service-worker-main');
+  // Load service-worker-main module to ensure it is populated on app ready
+  require('@electron/internal/browser/api/service-worker-main');
 
-// Load web-contents module to ensure it is populated on app ready
-require('@electron/internal/browser/api/web-contents');
+  // Load web-contents module to ensure it is populated on app ready
+  require('@electron/internal/browser/api/web-contents');
 
-// Load web-frame-main module to ensure it is populated on app ready
-require('@electron/internal/browser/api/web-frame-main');
+  // Load web-frame-main module to ensure it is populated on app ready
+  require('@electron/internal/browser/api/web-frame-main');
 
-// Required because `new BrowserWindow` calls some WebContentsView stuff, so
-// the inheritance needs to be set up before that happens.
-require('@electron/internal/browser/api/web-contents-view');
+  // Required because `new BrowserWindow` calls some WebContentsView stuff, so
+  // the inheritance needs to be set up before that happens.
+  require('@electron/internal/browser/api/web-contents-view');
+}
 
 // Set main startup script of the app.
 const mainStartupScript = packageJson.main || 'index.js';

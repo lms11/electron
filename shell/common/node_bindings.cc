@@ -484,6 +484,17 @@ namespace {
 base::FilePath GetResourcesPath() {
 #if BUILDFLAG(IS_MAC)
   return MainApplicationBundlePath().Append("Contents").Append("Resources");
+#elif BUILDFLAG(IS_ANDROID)
+  // On Android, resources are extracted to the app's files directory
+  // DIR_ANDROID_APP_DATA returns the path with "app_electron" suffix,
+  // but AssetExtractor uses getFilesDir() which is at the parent level
+  base::FilePath data_path;
+  base::PathService::Get(base::DIR_ANDROID_APP_DATA, &data_path);
+  
+  // Go up one level to remove the "app_electron" suffix
+  base::FilePath parent = data_path.DirName();
+  base::FilePath result = parent.Append(FILE_PATH_LITERAL("files")).Append(FILE_PATH_LITERAL("assets"));
+  return result;
 #else
   auto* command_line = base::CommandLine::ForCurrentProcess();
   base::FilePath exec_path(command_line->GetProgram());

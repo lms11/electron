@@ -5,6 +5,7 @@
 #include <iterator>
 #include <utility>
 
+#include "base/logging.h"
 #include "base/run_loop.h"
 #include "electron/buildflags/buildflags.h"
 #include "shell/common/gin_converters/content_converter.h"
@@ -95,6 +96,10 @@ void RunUntilIdle() {
   base::RunLoop().RunUntilIdle();
 }
 
+void Log(const std::string& message) {
+  LOG(INFO) << message;
+}
+
 void Initialize(v8::Local<v8::Object> exports,
                 v8::Local<v8::Value> unused,
                 v8::Local<v8::Context> context,
@@ -108,6 +113,7 @@ void Initialize(v8::Local<v8::Object> exports,
                  &RequestGarbageCollectionForTesting);
   dict.SetMethod("triggerFatalErrorForTesting", &TriggerFatalErrorForTesting);
   dict.SetMethod("runUntilIdle", &RunUntilIdle);
+  dict.SetMethod("log", &Log);
 }
 
 }  // namespace

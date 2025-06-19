@@ -2,9 +2,15 @@ import { Menu } from 'electron/main';
 
 import * as fs from 'fs';
 
-const bindings = process._linkedBinding('electron_browser_app');
+// const bindings = process._linkedBinding('electron_browser_app');
 const commandLine = process._linkedBinding('electron_common_command_line');
-const { app } = bindings;
+const app: any = {
+  on: () => {},
+  once: () => {},
+  setVersion: () => {},
+  setDesktopName: () => {},
+  setAppPath: () => {},
+}; // bindings.app;
 
 // Only one app object permitted.
 export default app;
@@ -27,12 +33,21 @@ Object.defineProperty(app, 'badgeCount', {
   set: (count) => nativeBCSetter.call(app, count)
 });
 
-const nativeNGetter = app.getName;
-const nativeNSetter = app.setName;
-Object.defineProperty(app, 'name', {
-  get: () => nativeNGetter.call(app),
-  set: (name) => nativeNSetter.call(app, name)
-});
+// For Android, stub out the name property since native methods aren't available
+if (process.platform === 'android') {
+  let appName = 'electron-android-app';
+  Object.defineProperty(app, 'name', {
+    get: () => appName,
+    set: (name) => { appName = name; }
+  });
+} else {
+  const nativeNGetter = app.getName;
+  const nativeNSetter = app.setName;
+  Object.defineProperty(app, 'name', {
+    get: () => nativeNGetter.call(app),
+    set: (name) => nativeNSetter.call(app, name)
+  });
+}
 
 Object.assign(app, {
   commandLine: {
@@ -60,7 +75,7 @@ app.setAppUserModelId = app.setAppUserModelId || (() => {});
 
 if (process.platform === 'darwin') {
   const setDockMenu = app.dock!.setMenu;
-  app.dock!.setMenu = (menu) => {
+  app.dock!.setMenu = (menu: any) => {
     dockMenu = menu;
     setDockMenu(menu);
   };
@@ -107,7 +122,7 @@ if (process.platform === 'linux') {
 // Routes the events to webContents.
 const events = ['certificate-error', 'select-client-certificate'];
 for (const name of events) {
-  app.on(name as 'certificate-error', (event, webContents, ...args: any[]) => {
+  app.on(name as 'certificate-error', (event: any, webContents: any, ...args: any[]) => {
     webContents.emit(name, event, ...args);
   });
 }

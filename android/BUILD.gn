@@ -125,6 +125,14 @@ android_assets("electron_apk_assets") {
     "apk/assets/index.html",
     "apk/assets/renderer.js",
   ]
+  renaming_sources = [
+    "apk/assets/app/package.json",
+    "apk/assets/app/index.js",
+  ]
+  renaming_destinations = [
+    "app/package.json",
+    "app/index.js",
+  ]
 }
 
 android_assets("electron_assets") {
