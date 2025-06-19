@@ -43,6 +43,7 @@ void ElectronApiIPCHandlerImpl::OnConnectionError() {
 void ElectronApiIPCHandlerImpl::Message(bool internal,
                                         const std::string& channel,
                                         blink::CloneableMessage arguments) {
+#if !BUILDFLAG(IS_ANDROID)
   auto* session = GetSession();
   v8::Isolate* isolate = electron::JavascriptEnvironment::GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -50,11 +51,13 @@ void ElectronApiIPCHandlerImpl::Message(bool internal,
   if (event.IsEmpty())
     return;
   session->Message(event, channel, std::move(arguments));
+#endif
 }
 void ElectronApiIPCHandlerImpl::Invoke(bool internal,
                                        const std::string& channel,
                                        blink::CloneableMessage arguments,
                                        InvokeCallback callback) {
+#if !BUILDFLAG(IS_ANDROID)
   auto* session = GetSession();
   v8::Isolate* isolate = electron::JavascriptEnvironment::GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -62,11 +65,18 @@ void ElectronApiIPCHandlerImpl::Invoke(bool internal,
   if (event.IsEmpty())
     return;
   session->Invoke(event, channel, std::move(arguments));
+#else
+  // On Android, we don't have Session API, so we can't process this
+  if (callback) {
+    std::move(callback).Run(blink::CloneableMessage());
+  }
+#endif
 }
 
 void ElectronApiIPCHandlerImpl::ReceivePostMessage(
     const std::string& channel,
     blink::TransferableMessage message) {
+#if !BUILDFLAG(IS_ANDROID)
   auto* session = GetSession();
   v8::Isolate* isolate = electron::JavascriptEnvironment::GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -74,12 +84,14 @@ void ElectronApiIPCHandlerImpl::ReceivePostMessage(
   if (event.IsEmpty())
     return;
   session->ReceivePostMessage(event, channel, std::move(message));
+#endif
 }
 
 void ElectronApiIPCHandlerImpl::MessageSync(bool internal,
                                             const std::string& channel,
                                             blink::CloneableMessage arguments,
                                             MessageSyncCallback callback) {
+#if !BUILDFLAG(IS_ANDROID)
   auto* session = GetSession();
   v8::Isolate* isolate = electron::JavascriptEnvironment::GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -87,10 +99,17 @@ void ElectronApiIPCHandlerImpl::MessageSync(bool internal,
   if (event.IsEmpty())
     return;
   session->MessageSync(event, channel, std::move(arguments));
+#else
+  // On Android, we don't have Session API, so we can't process this
+  if (callback) {
+    std::move(callback).Run(blink::CloneableMessage());
+  }
+#endif
 }
 
 void ElectronApiIPCHandlerImpl::MessageHost(const std::string& channel,
                                             blink::CloneableMessage arguments) {
+#if !BUILDFLAG(IS_ANDROID)
   auto* session = GetSession();
   v8::Isolate* isolate = electron::JavascriptEnvironment::GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -98,6 +117,7 @@ void ElectronApiIPCHandlerImpl::MessageHost(const std::string& channel,
   if (event.IsEmpty())
     return;
   session->MessageHost(event, channel, std::move(arguments));
+#endif
 }
 
 content::RenderFrameHost* ElectronApiIPCHandlerImpl::GetRenderFrameHost() {
@@ -105,9 +125,13 @@ content::RenderFrameHost* ElectronApiIPCHandlerImpl::GetRenderFrameHost() {
 }
 
 api::Session* ElectronApiIPCHandlerImpl::GetSession() {
+#if !BUILDFLAG(IS_ANDROID)
   auto* rfh = GetRenderFrameHost();
   return rfh ? api::Session::FromBrowserContext(rfh->GetBrowserContext())
              : nullptr;
+#else
+  return nullptr;
+#endif
 }
 
 gin::Handle<gin_helper::internal::Event>
@@ -116,6 +140,7 @@ ElectronApiIPCHandlerImpl::MakeIPCEvent(
     api::Session* session,
     bool internal,
     electron::mojom::ElectronApiIPC::InvokeCallback callback) {
+#if !BUILDFLAG(IS_ANDROID)
   if (!session) {
     if (callback) {
       // We must always invoke the callback if present.
@@ -163,6 +188,14 @@ ElectronApiIPCHandlerImpl::MakeIPCEvent(
     dict.Set("frameTreeNodeId", frame->GetFrameTreeNodeId());
   }
   return event;
+#else
+  // On Android, we don't have Session/WebContents API
+  if (callback) {
+    gin_helper::internal::ReplyChannel::Create(isolate, std::move(callback))
+        ->SendError("IPC not supported on Android");
+  }
+  return {};
+#endif
 }
 
 // static

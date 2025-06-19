@@ -92,7 +92,10 @@ class ElectronApiSWIPCHandlerImpl : public mojom::ElectronApiIPC,
   const raw_ptr<content::RenderProcessHost> render_process_host_;
 
   // Service worker version ID.
+  // TODO(android): Session API is disabled on android
+#if !BUILDFLAG(IS_ANDROID)
   int64_t version_id_;
+#endif
 
   mojo::AssociatedReceiver<mojom::ElectronApiIPC> receiver_{this};
 

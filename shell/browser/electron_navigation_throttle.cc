@@ -24,6 +24,7 @@ const char* ElectronNavigationThrottle::GetNameForLogging() {
 
 content::NavigationThrottle::ThrottleCheckResult
 ElectronNavigationThrottle::WillStartRequest() {
+#if !BUILDFLAG(IS_ANDROID)
   auto* handle = navigation_handle();
   auto* contents = handle->GetWebContents();
   if (!contents) {
@@ -60,10 +61,14 @@ ElectronNavigationThrottle::WillStartRequest() {
     return CANCEL;
   }
   return PROCEED;
+#else
+  return PROCEED;
+#endif
 }
 
 content::NavigationThrottle::ThrottleCheckResult
 ElectronNavigationThrottle::WillRedirectRequest() {
+#if !BUILDFLAG(IS_ANDROID)
   auto* handle = navigation_handle();
   auto* contents = handle->GetWebContents();
   if (!contents) {
@@ -82,6 +87,9 @@ ElectronNavigationThrottle::WillRedirectRequest() {
     return CANCEL;
   }
   return PROCEED;
+#else
+  return PROCEED;
+#endif
 }
 
 }  // namespace electron

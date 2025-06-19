@@ -122,6 +122,7 @@ bool BundledDataSource::ShouldServeMimeTypeAsContentTypeHeader() {
 void BundledDataSource::StartBundledDataRequest(const std::string& path,
                                                 GotDataCallback callback) {
   std::string filename = PathWithoutParams(path);
+#if !BUILDFLAG(IS_ANDROID)
   scoped_refptr<base::RefCountedMemory> bytes =
       content::DevToolsFrontendHost::GetFrontendResourceBytes(filename);
 
@@ -130,6 +131,10 @@ void BundledDataSource::StartBundledDataRequest(const std::string& path,
       << ". If you compiled with debug_devtools=1, try running with "
          "--debug-devtools.";
   std::move(callback).Run(bytes);
+#else
+  // DevTools not supported on Android
+  std::move(callback).Run(nullptr);
+#endif
 }
 
 }  // namespace electron

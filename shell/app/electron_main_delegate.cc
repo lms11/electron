@@ -34,11 +34,8 @@
 #include "shell/app/command_line_args.h"
 #include "shell/app/electron_content_client.h"
 #include "shell/browser/electron_gpu_client.h"
-#if BUILDFLAG(IS_ANDROID)
-#include "content/shell/browser/shell_content_browser_client.h"
-#else
 #include "shell/browser/electron_browser_client.h"
-#endif
+#include "shell/common/electron_command_line.h"
 #include "shell/browser/feature_list.h"
 #include "shell/browser/relauncher.h"
 #include "shell/common/application_info.h"
@@ -237,6 +234,7 @@ void InitializeResourcesOnAndroid() {
   } else {
     pak_fd =
         base::android::OpenApkAsset("assets/content_shell.pak", &pak_region);
+    // TODO(android): Replace content_shell.pak with electron resources
     // Loaded from disk for browsertests.
     if (pak_fd < 0) {
       base::FilePath pak_file;
@@ -299,6 +297,12 @@ const size_t ElectronMainDelegate::kNonWildcardDomainNonPortSchemesSize =
 std::optional<int> ElectronMainDelegate::BasicStartupComplete() {
   auto* command_line = base::CommandLine::ForCurrentProcess();
 
+#if BUILDFLAG(IS_ANDROID)
+  // On Android, we need to initialize ElectronCommandLine from the existing
+  // CommandLine since there's no main() function that calls Init()
+  electron::ElectronCommandLine::InitializeFromCommandLine();
+#endif
+
 #if BUILDFLAG(IS_WIN)
   v8_crashpad_support::SetUp();
 
@@ -354,9 +358,8 @@ std::optional<int> ElectronMainDelegate::BasicStartupComplete() {
 #endif
 
 #if BUILDFLAG(IS_ANDROID)
-  // TODO(shivramk): This is needed because we're using Shell's browser client
-  // on Android. We should implement proper Electron path handling for Android
-  // instead of relying on Shell's implementation.
+  // TODO(android): We're still using Shell's path provider for resource loading.
+  // This should be replaced with Electron-specific path handling.
   content::RegisterShellPathProvider();
 #endif
 
@@ -473,8 +476,7 @@ std::optional<int> ElectronMainDelegate::PostEarlyInitialization(
   if (!ShouldCreateFeatureList(invoked_in)) {
     // Apply field trial testing configuration since content did not.
 #if BUILDFLAG(IS_ANDROID)
-    static_cast<content::ShellContentBrowserClient*>(browser_client_.get())
-        ->CreateFeatureListAndFieldTrials();
+    InitializeFeatureList();
 #else
     static_cast<ElectronBrowserClient*>(browser_client_.get())
         ->CreateFeatureListAndFieldTrials();
@@ -483,9 +485,6 @@ std::optional<int> ElectronMainDelegate::PostEarlyInitialization(
   if (!ShouldInitializeMojo(invoked_in)) {
     content::InitializeMojoCore();
   }
-
-  // Note: Skipping memory_system initialization from ShellMainDelegate
-  // as requested.
 
   return std::nullopt;
 }
@@ -530,11 +529,7 @@ content::ContentClient* ElectronMainDelegate::CreateContentClient() {
 
 content::ContentBrowserClient*
 ElectronMainDelegate::CreateContentBrowserClient() {
-#if BUILDFLAG(IS_ANDROID)
-  browser_client_ = std::make_unique<content::ShellContentBrowserClient>();
-#else
   browser_client_ = std::make_unique<ElectronBrowserClient>();
-#endif
   return browser_client_.get();
 }
 
@@ -582,10 +577,10 @@ std::variant<int, content::MainFunctionParams> ElectronMainDelegate::RunProcess(
   int initialize_exit_code =
       main_runner->Initialize(std::move(main_function_params));
   DCHECK_LT(initialize_exit_code, 0)
-      << "BrowserMainRunner::Initialize failed in ShellMainDelegate";
+      << "BrowserMainRunner::Initialize failed in ElectronMainDelegate";
   std::ignore = main_runner.release();
   // Return 0 as BrowserMain() should not be called after this, bounce up to
-  // the system message loop for ContentShell, and we're already done thanks
+  // the system message loop for Electron, and we're already done thanks
   // to the |ui_task| for browser tests.
   return 0;
 #else

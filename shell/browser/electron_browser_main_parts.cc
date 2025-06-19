@@ -280,9 +280,12 @@ void ElectronBrowserMainParts::PostEarlyInitialization() {
 }
 
 int ElectronBrowserMainParts::PreCreateThreads() {
+  // TODO(android): Views toolkit is not available on Android
+#if !BUILDFLAG(IS_ANDROID)
   if (!views::LayoutProvider::Get()) {
     layout_provider_ = std::make_unique<views::LayoutProvider>();
   }
+#endif
 
   // Fetch the system locale for Electron.
 #if BUILDFLAG(IS_MAC)

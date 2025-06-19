@@ -45,9 +45,13 @@ class ServiceWorkerIPCList : public base::SupportsUserData::Data {
 
 ElectronApiSWIPCHandlerImpl::ElectronApiSWIPCHandlerImpl(
     content::RenderProcessHost* render_process_host,
-    int64_t version_id,
+    [[maybe_unused]] int64_t version_id,
     mojo::PendingAssociatedReceiver<mojom::ElectronApiIPC> receiver)
-    : render_process_host_(render_process_host), version_id_(version_id) {
+    : render_process_host_(render_process_host)
+#if !BUILDFLAG(IS_ANDROID)
+      , version_id_(version_id)
+#endif
+{
   DCHECK_CURRENTLY_ON(content::BrowserThread::UI);
 
   receiver_.Bind(std::move(receiver));
@@ -70,6 +74,7 @@ void ElectronApiSWIPCHandlerImpl::RemoteDisconnected() {
 void ElectronApiSWIPCHandlerImpl::Message(bool internal,
                                           const std::string& channel,
                                           blink::CloneableMessage arguments) {
+#if !BUILDFLAG(IS_ANDROID)
   auto* session = GetSession();
   v8::Isolate* isolate = electron::JavascriptEnvironment::GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -77,12 +82,14 @@ void ElectronApiSWIPCHandlerImpl::Message(bool internal,
   if (event.IsEmpty())
     return;
   session->Message(event, channel, std::move(arguments));
+#endif
 }
 
 void ElectronApiSWIPCHandlerImpl::Invoke(bool internal,
                                          const std::string& channel,
                                          blink::CloneableMessage arguments,
                                          InvokeCallback callback) {
+#if !BUILDFLAG(IS_ANDROID)
   auto* session = GetSession();
   v8::Isolate* isolate = electron::JavascriptEnvironment::GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -90,11 +97,18 @@ void ElectronApiSWIPCHandlerImpl::Invoke(bool internal,
   if (event.IsEmpty())
     return;
   session->Invoke(event, channel, std::move(arguments));
+#else
+  // On Android, we don't have Session API, so we can't process this
+  if (callback) {
+    std::move(callback).Run(blink::CloneableMessage());
+  }
+#endif
 }
 
 void ElectronApiSWIPCHandlerImpl::ReceivePostMessage(
     const std::string& channel,
     blink::TransferableMessage message) {
+#if !BUILDFLAG(IS_ANDROID)
   auto* session = GetSession();
   v8::Isolate* isolate = electron::JavascriptEnvironment::GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -102,12 +116,14 @@ void ElectronApiSWIPCHandlerImpl::ReceivePostMessage(
   if (event.IsEmpty())
     return;
   session->ReceivePostMessage(event, channel, std::move(message));
+#endif
 }
 
 void ElectronApiSWIPCHandlerImpl::MessageSync(bool internal,
                                               const std::string& channel,
                                               blink::CloneableMessage arguments,
                                               MessageSyncCallback callback) {
+#if !BUILDFLAG(IS_ANDROID)
   auto* session = GetSession();
   v8::Isolate* isolate = electron::JavascriptEnvironment::GetIsolate();
   v8::HandleScope handle_scope(isolate);
@@ -115,6 +131,12 @@ void ElectronApiSWIPCHandlerImpl::MessageSync(bool internal,
   if (event.IsEmpty())
     return;
   session->MessageSync(event, channel, std::move(arguments));
+#else
+  // On Android, we don't have Session API, so we can't process this
+  if (callback) {
+    std::move(callback).Run(blink::CloneableMessage());
+  }
+#endif
 }
 
 void ElectronApiSWIPCHandlerImpl::MessageHost(
@@ -130,7 +152,11 @@ ElectronBrowserContext* ElectronApiSWIPCHandlerImpl::GetBrowserContext() {
 }
 
 api::Session* ElectronApiSWIPCHandlerImpl::GetSession() {
+#if !BUILDFLAG(IS_ANDROID)
   return api::Session::FromBrowserContext(GetBrowserContext());
+#else
+  return nullptr;
+#endif
 }
 
 gin::Handle<gin_helper::internal::Event>
@@ -139,6 +165,7 @@ ElectronApiSWIPCHandlerImpl::MakeIPCEvent(
     api::Session* session,
     bool internal,
     electron::mojom::ElectronApiIPC::InvokeCallback callback) {
+#if !BUILDFLAG(IS_ANDROID)
   if (!session) {
     if (callback) {
       // We must always invoke the callback if present.
@@ -168,6 +195,14 @@ ElectronApiSWIPCHandlerImpl::MakeIPCEvent(
     dict.SetHidden("internal", internal);
 
   return event;
+#else
+  // On Android, we don't have Session API
+  if (callback) {
+    gin_helper::internal::ReplyChannel::Create(isolate, std::move(callback))
+        ->SendError("IPC not supported on Android");
+  }
+  return {};
+#endif
 }
 
 void ElectronApiSWIPCHandlerImpl::Destroy() {

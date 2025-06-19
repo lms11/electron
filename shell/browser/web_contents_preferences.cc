@@ -449,6 +449,7 @@ void WebContentsPreferences::OverrideWebkitPrefs(
   prefs->is_webview = is_webview_;
 
   prefs->hidden_page = false;
+#if !BUILDFLAG(IS_ANDROID)
   // Webview `document.visibilityState` tracks window visibility so we need
   // to let it know if the window happens to be hidden right now.
   if (auto* api_web_contents = api::WebContents::From(web_contents_)) {
@@ -464,6 +465,7 @@ void WebContentsPreferences::OverrideWebkitPrefs(
       }
     }
   }
+#endif
 
   prefs->offscreen = offscreen_;
 

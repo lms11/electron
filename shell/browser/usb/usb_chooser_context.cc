@@ -184,6 +184,8 @@ void UsbChooserContext::RevokeObjectPermissionInternal(
     }
   }
 
+  // TODO(android): Session API is disabled on Android
+#if !BUILDFLAG(IS_ANDROID)
   api::Session* session = api::Session::FromBrowserContext(browser_context_);
   if (session) {
     v8::Isolate* isolate = JavascriptEnvironment::GetIsolate();
@@ -193,6 +195,7 @@ void UsbChooserContext::RevokeObjectPermissionInternal(
     details.Set("origin", origin.Serialize());
     session->Emit("usb-device-revoked", details);
   }
+#endif
 }
 
 void UsbChooserContext::GrantDevicePermission(

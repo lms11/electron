@@ -62,25 +62,35 @@ api::Session* UsbChooserController::GetSession() {
   if (!web_contents()) {
     return nullptr;
   }
+#if !BUILDFLAG(IS_ANDROID)
   return api::Session::FromBrowserContext(web_contents()->GetBrowserContext());
+#else
+  return nullptr;
+#endif
 }
 
 void UsbChooserController::OnDeviceAdded(
     const device::mojom::UsbDeviceInfo& device_info) {
   if (DisplayDevice(device_info)) {
+// TODO (android): api::Session is currently disabled on android
+#if !BUILDFLAG(IS_ANDROID)
     api::Session* session = GetSession();
     if (session) {
       session->Emit("usb-device-added", device_info.Clone(), web_contents());
     }
+#endif
   }
 }
 
 void UsbChooserController::OnDeviceRemoved(
     const device::mojom::UsbDeviceInfo& device_info) {
+// TODO (android): api::Session is currently disabled on android
+#if !BUILDFLAG(IS_ANDROID)
   api::Session* session = GetSession();
   if (session) {
     session->Emit("usb-device-removed", device_info.Clone(), web_contents());
   }
+#endif
 }
 
 void UsbChooserController::OnDeviceChosen(gin::Arguments* args) {
@@ -113,6 +123,8 @@ void UsbChooserController::GotUsbDeviceList(
   if (chooser_context_)
     observation_.Observe(chooser_context_.get());
 
+// TODO (android): api::Session is currently disabled on android
+#if !BUILDFLAG(IS_ANDROID)
   bool prevent_default = false;
   api::Session* session = GetSession();
   if (session) {
@@ -138,6 +150,7 @@ void UsbChooserController::GotUsbDeviceList(
   if (!prevent_default) {
     RunCallback(/*device_info=*/nullptr);
   }
+#endif
 }
 
 bool UsbChooserController::DisplayDevice(

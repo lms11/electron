@@ -59,9 +59,14 @@ std::unique_ptr<content::BluetoothChooser>
 ElectronBluetoothDelegate::RunBluetoothChooser(
     content::RenderFrameHost* frame,
     const content::BluetoothChooser::EventHandler& event_handler) {
+    // TODO(android): api::WebContents is disabled for now on android
+#if !BUILDFLAG(IS_ANDROID)
   auto* api_web_contents =
       api::WebContents::From(content::WebContents::FromRenderFrameHost(frame));
   return std::make_unique<BluetoothChooser>(api_web_contents, event_handler);
+#else
+  return nullptr;
+#endif
 }
 
 // The following methods are not currently called in Electron.

@@ -31,10 +31,12 @@ void NetworkHintsHandlerImpl::Preconnect(const url::SchemeHostPort& url,
   if (!browser_context_) {
     return;
   }
+#if !BUILDFLAG(IS_ANDROID)
   auto* session = electron::api::Session::FromBrowserContext(browser_context_);
   if (session) {
     session->Emit("preconnect", url.GetURL(), allow_credentials);
   }
+#endif
 }
 
 void NetworkHintsHandlerImpl::Create(

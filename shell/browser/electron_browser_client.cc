@@ -566,10 +566,13 @@ void ElectronBrowserClient::AppendExtraCommandLineSwitches(
     }
 #endif
 
+    // TODO(android): App API is disabled on Android
+#if !BUILDFLAG(IS_ANDROID)
     if (delegate_) {
       auto app_path = static_cast<api::App*>(delegate_)->GetAppPath();
       command_line->AppendSwitchPath(switches::kAppPath, app_path);
     }
+#endif
 
     auto env = base::Environment::Create();
     if (env->HasVar("ELECTRON_PROFILE_INIT_SCRIPTS")) {
@@ -698,6 +701,8 @@ bool ElectronBrowserClient::CanCreateWindow(
 std::unique_ptr<content::VideoOverlayWindow>
 ElectronBrowserClient::CreateWindowForVideoPictureInPicture(
     content::VideoPictureInPictureWindowController* controller) {
+  // TODO(android): VideoOverlayWindow is not available on Android
+#if !BUILDFLAG(IS_ANDROID)
   auto overlay_window = content::VideoOverlayWindow::Create(controller);
 #if BUILDFLAG(IS_WIN)
   std::wstring app_user_model_id = Browser::Get()->GetAppUserModelID();
@@ -711,6 +716,9 @@ ElectronBrowserClient::CreateWindowForVideoPictureInPicture(
   }
 #endif
   return overlay_window;
+#else
+  return nullptr;
+#endif
 }
 
 void ElectronBrowserClient::GetAdditionalAllowedSchemesForFileSystem(
@@ -882,25 +890,34 @@ void ElectronBrowserClient::RenderProcessHostDestroyed(
 
 void ElectronBrowserClient::RenderProcessReady(
     content::RenderProcessHost* host) {
+  // TODO(android): App API is disabled on Android
+#if !BUILDFLAG(IS_ANDROID)
   if (delegate_) {
     static_cast<api::App*>(delegate_)->RenderProcessReady(host);
   }
+#endif
 }
 
 void ElectronBrowserClient::RenderProcessExited(
     content::RenderProcessHost* host,
     const content::ChildProcessTerminationInfo& info) {
+  // TODO(android): App API is disabled on Android
+#if !BUILDFLAG(IS_ANDROID)
   if (delegate_) {
     static_cast<api::App*>(delegate_)->RenderProcessExited(host);
   }
+#endif
 }
 
 namespace {
 
 void OnOpenExternal(const GURL& escaped_url, bool allowed) {
   if (allowed) {
+    // TODO(android): platform_util::OpenExternal is not implemented on Android
+#if !BUILDFLAG(IS_ANDROID)
     platform_util::OpenExternal(
         escaped_url, platform_util::OpenExternalOptions(), base::DoNothing());
+#endif
   }
 }
 
@@ -1801,9 +1818,14 @@ ElectronBrowserClient::GetGeolocationSystemPermissionManager() {
 #endif
 
 content::HidDelegate* ElectronBrowserClient::GetHidDelegate() {
+  // TODO(android): HID is not supported on Android
+#if !BUILDFLAG(IS_ANDROID)
   if (!hid_delegate_)
     hid_delegate_ = std::make_unique<ElectronHidDelegate>();
   return hid_delegate_.get();
+#else
+  return nullptr;
+#endif
 }
 
 content::WebAuthenticationDelegate*

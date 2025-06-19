@@ -146,7 +146,12 @@ api::Session* SerialChooserController::GetSession() {
   if (!web_contents_) {
     return nullptr;
   }
+  // TODO(android): Session API is disabled on Android
+#if !BUILDFLAG(IS_ANDROID)
   return api::Session::FromBrowserContext(web_contents_->GetBrowserContext());
+#else
+  return nullptr;
+#endif
 }
 
 void SerialChooserController::GetDevices() {

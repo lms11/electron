@@ -24,9 +24,10 @@ class ElectronCommandLine {
 
   static void Init(int argc, base::CommandLine::CharType const* const* argv);
 
-#if BUILDFLAG(IS_LINUX)
+#if BUILDFLAG(IS_LINUX) || BUILDFLAG(IS_ANDROID)
   // On Linux the command line has to be read from base::CommandLine since
-  // it is using zygote.
+  // it is using zygote. Android has the same requirement since the app doesn't
+  // go through main().
   static void InitializeFromCommandLine();
 #endif
 

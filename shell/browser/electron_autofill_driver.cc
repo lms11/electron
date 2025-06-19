@@ -36,6 +36,7 @@ void AutofillDriver::ShowAutofillPopup(
     const std::vector<std::u16string>& labels) {
   v8::Isolate* isolate = JavascriptEnvironment::GetIsolate();
   v8::HandleScope scope(isolate);
+#if !BUILDFLAG(IS_ANDROID)
   auto* web_contents = api::WebContents::From(
       content::WebContents::FromRenderFrameHost(render_frame_host_));
   if (!web_contents)
@@ -66,6 +67,8 @@ void AutofillDriver::ShowAutofillPopup(
                               owner_window->content_view(), popup_bounds);
   autofill_popup_->SetItems(values, labels);
 #endif
+
+#endif // TODO(android) : re-enable once we have api::WebContents
 }
 
 void AutofillDriver::HideAutofillPopup() {

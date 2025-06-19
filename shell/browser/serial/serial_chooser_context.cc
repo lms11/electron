@@ -147,6 +147,8 @@ void SerialChooserContext::RevokePortPermissionWebInitiated(
     ports.erase(token);
   }
 
+  // TODO(android): Session API is disabled on Android
+#if !BUILDFLAG(IS_ANDROID)
   auto* web_contents =
       content::WebContents::FromRenderFrameHost(render_frame_host);
   api::Session* session =
@@ -161,6 +163,7 @@ void SerialChooserContext::RevokePortPermissionWebInitiated(
     details.Set("origin", origin.Serialize());
     session->Emit("serial-port-revoked", details);
   }
+#endif
 }
 
 // static
