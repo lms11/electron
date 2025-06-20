@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Shivram Khandeparker <shivramk@gmail.com>
+Date: Fri, 20 Jun 2025 09:30:15 +0000
+Subject: fix: Android build fixes for electron_node
+
+- Mark 'avail' variables as unused in llhttp to suppress compiler warnings
+- Add zstd compress dependency needed for Android builds
+
+These changes are required to build electron_node for Android without
+compilation errors.
+
+diff --git a/deps/llhttp/src/llhttp.c b/deps/llhttp/src/llhttp.c
+index 3ef3b817f3d9cee143a17e152d6170022ea53232..dcb5cab66181137d900dcc95eb32b4031b4335c0 100644
+--- a/deps/llhttp/src/llhttp.c
++++ b/deps/llhttp/src/llhttp.c
+@@ -2632,7 +2632,7 @@ static llparse_state_t llhttp__internal__run(
+       if (endp - p >= 16) {
+         __m128i ranges;
+         __m128i input;
+-        int avail;
++        int avail __attribute__((unused));
+         int match_len;
+       
+         /* Load input */
+@@ -2862,7 +2862,7 @@ static llparse_state_t llhttp__internal__run(
+       if (endp - p >= 16) {
+         __m128i ranges;
+         __m128i input;
+-        int avail;
++        int avail __attribute__((unused));
+         int match_len;
+       
+         /* Load input */
+diff --git a/unofficial.gni b/unofficial.gni
+index 6bcc40b282543fc40f80c5c6659de658209844b8..b7ce6b8b5ed20fd784e70cc477ab1d1ca2269d44 100644
+--- a/unofficial.gni
++++ b/unofficial.gni
+@@ -164,6 +164,7 @@ template("node_gn_build") {
+       "//third_party/brotli:dec",
+       "//third_party/brotli:enc",
+       "//third_party/zstd:decompress",
++      "//third_party/zstd:compress",
+       "//third_party/zstd:headers",
+       "$node_simdutf_path",
+       "$node_v8_path:v8_libplatform",
