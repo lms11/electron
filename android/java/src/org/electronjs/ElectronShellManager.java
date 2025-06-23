@@ -24,7 +24,7 @@ import org.chromium.content_public.browser.WebContents;
 import org.chromium.ui.base.WindowAndroid;
 import org.electronjs.ElectronShell;
 
-import org.chromium.content_shell.R;
+import org.electronjs.R;
 
 /** Container and generator of ShellViews. */
 @JNINamespace("content")

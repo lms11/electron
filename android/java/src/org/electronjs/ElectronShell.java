@@ -41,7 +41,7 @@ import org.chromium.content_public.browser.WebContents;
 import org.chromium.ui.base.ViewAndroidDelegate;
 import org.chromium.ui.base.WindowAndroid;
 
-import org.chromium.content_shell.R;
+import org.electronjs.R;
 
 /** Container for the various UI components that make up a shell window. */
 @JNINamespace("content")

@@ -71,7 +71,7 @@ android_resources("electron_apk_resources") {
 android_library("electron_shell_java") {
   testonly = true
   
-  resources_package = "org.chromium.content_shell"
+  resources_package = "org.electronjs"
   deps = [
     ":electron_apk_resources",
     "//base:base_java",
@@ -182,8 +182,6 @@ android_assets("electron_assets") {
   sources = [
     "$target_gen_dir/electron_android.pak",
   ]
-  renaming_sources = [ "$target_gen_dir/electron_android.pak" ]
-  renaming_destinations = [ "content_shell.pak" ]
   
   disable_compression = true
   deps = [
