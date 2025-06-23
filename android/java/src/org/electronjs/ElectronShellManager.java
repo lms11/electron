@@ -86,7 +86,7 @@ public class ElectronShellManager extends FrameLayout {
 
     @SuppressWarnings("unused")
     @CalledByNative
-    private Object createShell(long nativeShellPtr) {
+    private Object createShell(long nativeWebContentsPtr) {
         if (mContentViewRenderView == null) {
             mContentViewRenderView = new ContentViewRenderView(getContext());
             mContentViewRenderView.onNativeLibraryLoaded(mWindow);
@@ -94,7 +94,7 @@ public class ElectronShellManager extends FrameLayout {
         LayoutInflater inflater =
                 (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         ElectronShell shellView = (ElectronShell) inflater.inflate(R.layout.shell_view, null);
-        shellView.initialize(nativeShellPtr, mWindow);
+        shellView.initialize(nativeWebContentsPtr, mWindow);
 
         // TODO(tedchoc): Allow switching back to these inactive shells.
         if (mActiveShell != null) removeShell(mActiveShell);

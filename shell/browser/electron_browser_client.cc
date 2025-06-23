@@ -598,6 +598,8 @@ void ElectronBrowserClient::AppendExtraCommandLineSwitches(
             command_line, IsRendererSubFrame(unsafe_process_id));
     }
 
+    // TODO (android) session prefs is null because we don't have webcontents
+#if !BUILDFLAG(IS_ANDROID)
     // Service worker processes should only run preloads if one has been
     // registered prior to startup.
     auto* render_process_host = content::RenderProcessHost::FromID(process_id);
@@ -609,6 +611,7 @@ void ElectronBrowserClient::AppendExtraCommandLineSwitches(
         command_line->AppendSwitch(switches::kServiceWorkerPreload);
       }
     }
+#endif
   }
 }
 
@@ -1391,9 +1394,9 @@ void ElectronBrowserClient::WillCreateURLLoaderFactory(
   }
 #endif
 
+#if BUILDFLAG(ENABLE_ELECTRON_EXTENSIONS)
   auto [proxied_receiver, target_factory_remote] = factory_builder.Append();
 
-#if BUILDFLAG(ENABLE_ELECTRON_EXTENSIONS)
   // Required by WebRequestInfoInitParams.
   //
   // Note that in Electron we allow webRequest to capture requests sent from
@@ -1420,7 +1423,8 @@ void ElectronBrowserClient::WillCreateURLLoaderFactory(
       std::move(proxied_receiver), std::move(target_factory_remote),
       std::move(header_client_receiver), type);
 #else
-  // FIXME(shivramk): Implement non-extension URL loading for Android
+  // On Android without extensions, we don't need to proxy the factory
+  // Just let the default factory handle the request
 #endif
 }
 

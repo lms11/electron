@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -51,7 +52,7 @@ public class ElectronShell extends LinearLayout {
     private WebContents mWebContents;
     private NavigationController mNavigationController;
 
-    private long mNativeShell;
+    private long mNativeWebContents;
     private @Nullable ContentViewRenderView mContentViewRenderView;
     private @Nullable WindowAndroid mWindow;
     private @Nullable ViewAndroidDelegate mViewAndroidDelegate;
@@ -83,11 +84,11 @@ public class ElectronShell extends LinearLayout {
     /**
      * Initializes the Shell for use.
      *
-     * @param nativeShell The pointer to the native Shell object.
+     * @param nativeWebContents The pointer to the native WebContents object.
      * @param window The owning window for this shell.
      */
-    public void initialize(long nativeShell, WindowAndroid window) {
-        mNativeShell = nativeShell;
+    public void initialize(long nativeWebContents, WindowAndroid window) {
+        mNativeWebContents = nativeWebContents;
         mWindow = window;
     }
 
@@ -96,15 +97,15 @@ public class ElectronShell extends LinearLayout {
      * dependencies.
      */
     public void close() {
-        if (mNativeShell == 0) return;
-        ElectronShellJni.get().closeShell(mNativeShell);
+        if (mNativeWebContents == 0) return;
+        ElectronShellJni.get().closeShell(mNativeWebContents);
     }
 
     @SuppressWarnings("NullAway")
     @CalledByNative
     private void onNativeDestroyed() {
         mWindow = null;
-        mNativeShell = 0;
+        mNativeWebContents = 0;
         mWebContents = null;
     }
 
@@ -113,7 +114,7 @@ public class ElectronShell extends LinearLayout {
      * @see #onNativeDestroyed()
      */
     public boolean isDestroyed() {
-        return mNativeShell == 0;
+        return mNativeWebContents == 0;
     }
 
 
@@ -173,15 +174,23 @@ public class ElectronShell extends LinearLayout {
         SelectionPopupController.fromWebContents(webContents)
                 .setActionModeCallback(defaultActionCallback());
         mNavigationController = assertNonNull(mWebContents.getNavigationController());
-        if (getParent() != null) mWebContents.updateWebContentsVisibility(Visibility.VISIBLE);
-        ((FrameLayout) findViewById(R.id.contentview_holder))
-                .addView(
-                        cv,
-                        new FrameLayout.LayoutParams(
-                                FrameLayout.LayoutParams.MATCH_PARENT,
-                                FrameLayout.LayoutParams.MATCH_PARENT));
+        
+        if (getParent() != null) {
+            mWebContents.updateWebContentsVisibility(Visibility.VISIBLE);
+        } else {
+        }
+        
+        FrameLayout contentViewHolder = (FrameLayout) findViewById(R.id.contentview_holder);
+        contentViewHolder.addView(
+                cv,
+                new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT));
         cv.requestFocus();
-        assumeNonNull(mContentViewRenderView).setCurrentWebContents(mWebContents);
+        
+        if (mContentViewRenderView != null) {
+            mContentViewRenderView.setCurrentWebContents(mWebContents);
+        }
     }
 
     /**
@@ -231,13 +240,14 @@ public class ElectronShell extends LinearLayout {
         };
     }
 
-    @CalledByNative
-    public void setOverlayMode(boolean useOverlayMode) {
-        assumeNonNull(mContentViewRenderView).setOverlayVideoMode(useOverlayMode);
-        if (mOverlayModeChangedCallbackForTesting != null) {
-            mOverlayModeChangedCallbackForTesting.onResult(useOverlayMode);
-        }
-    }
+    // Commented out as we don't use overlay mode in our implementation
+    // @CalledByNative
+    // public void setOverlayMode(boolean useOverlayMode) {
+    //     assumeNonNull(mContentViewRenderView).setOverlayVideoMode(useOverlayMode);
+    //     if (mOverlayModeChangedCallbackForTesting != null) {
+    //         mOverlayModeChangedCallbackForTesting.onResult(useOverlayMode);
+    //     }
+    // }
 
     public void setOverayModeChangedCallbackForTesting(Callback<Boolean> callback) {
         mOverlayModeChangedCallbackForTesting = callback;
@@ -261,6 +271,6 @@ public class ElectronShell extends LinearLayout {
 
     @NativeMethods
     interface Natives {
-        void closeShell(long shellPtr);
+        void closeShell(long webContentsPtr);
     }
 }

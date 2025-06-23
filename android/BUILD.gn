@@ -4,13 +4,15 @@
 
 import("//build/config/android/config.gni")
 import("//build/config/android/rules.gni")
+import("//build/config/locales.gni")
 import("//third_party/icu/config.gni")
 import("//third_party/jni_zero/jni_zero.gni")
+import("//tools/grit/repack.gni")
 
 electron_manifest =
     "$target_gen_dir/electron_manifest/AndroidManifest.xml"
 
-generate_jni("content_shell_jni_headers") {
+generate_jni("electron_shell_jni_headers") {
   sources = [
     "java/src/org/electronjs/ElectronShell.java",
     "java/src/org/electronjs/ElectronShellManager.java",
@@ -20,10 +22,9 @@ generate_jni("content_shell_jni_headers") {
 shared_library_with_jni("libelectron_content_view") {
   testonly = true
   deps = [
-    ":content_shell_jni_headers",
+    ":electron_shell_jni_headers",
     "//components/crash/content/browser",
-    "//content/shell:content_shell_app",
-    "//content/shell:content_shell_lib",
+    "//components/embedder_support/android:view",
     "//electron:electron_lib",
     "//media",
     "//skia",
@@ -48,7 +49,7 @@ shared_library_with_jni("libelectron_content_view") {
   configs += [ "//build/config/android:hide_all_but_jni" ]
   java_targets = [
     ":electron_apk",
-    ":content_shell_java",
+    ":electron_shell_java",
   ]
 }
 
@@ -67,7 +68,7 @@ android_resources("electron_apk_resources") {
   ]
 }
 
-android_library("content_shell_java") {
+android_library("electron_shell_java") {
   testonly = true
   
   resources_package = "org.chromium.content_shell"
@@ -88,7 +89,7 @@ android_library("content_shell_java") {
     "java/src/org/electronjs/ElectronShellManager.java",
   ]
   
-  srcjar_deps = [ ":content_shell_jni_headers" ]
+  srcjar_deps = [ ":electron_shell_jni_headers" ]
 }
 
 android_library("electron_apk_java") {
@@ -96,7 +97,7 @@ android_library("electron_apk_java") {
   
   resources_package = "org.electronjs.apk"
   deps = [
-    ":content_shell_java",
+    ":electron_shell_java",
     ":electron_apk_resources",
     ":electron_manifest",
     "//base:base_java",
@@ -135,12 +136,58 @@ android_assets("electron_apk_assets") {
   ]
 }
 
+# Repack English locale with Chrome platform settings for font support
+repack("electron_android_pak") {
+  testonly = true
+  sources = [
+    "$root_gen_dir/base/tracing/protos/tracing_proto_resources.pak",
+    "$root_gen_dir/chrome/platform_locale_settings_en-US.pak",
+    "$root_gen_dir/components/components_resources.pak",
+    "$root_gen_dir/content/content_resources.pak",
+    "$root_gen_dir/content/gpu_resources.pak",
+    "$root_gen_dir/content/process_resources.pak",
+    "$root_gen_dir/mojo/public/js/mojo_bindings_resources.pak",
+    "$root_gen_dir/net/net_resources.pak",
+    "$root_gen_dir/third_party/blink/public/resources/blink_resources.pak",
+    "$root_gen_dir/third_party/blink/public/resources/blink_scaled_resources_100_percent.pak",
+    "$root_gen_dir/third_party/blink/public/resources/inspector_overlay_resources.pak",
+    "$root_gen_dir/third_party/blink/public/strings/blink_strings_en-US.pak",
+    "$root_gen_dir/ui/resources/ui_resources_100_percent.pak",
+    "$root_gen_dir/ui/strings/app_locale_settings_en-US.pak",
+    "$root_gen_dir/ui/strings/ui_strings_en-US.pak",
+  ]
+  
+  deps = [
+    "//base/tracing/protos:chrome_track_event_resources",
+    "//chrome/app/resources:platform_locale_settings",
+    "//components/resources",
+    "//content:content_resources",
+    "//content/browser/resources/gpu:resources",
+    "//content/browser/resources/process:resources",
+    "//mojo/public/js:resources",
+    "//net:net_resources",
+    "//third_party/blink/public:resources",
+    "//third_party/blink/public:scaled_resources_100_percent",
+    "//third_party/blink/public:devtools_inspector_resources",
+    "//third_party/blink/public/strings",
+    "//ui/resources",
+    "//ui/strings",
+  ]
+  
+  output = "$target_gen_dir/electron_android.pak"
+}
+
 android_assets("electron_assets") {
   testonly = true
-  sources = [ "$root_out_dir/content_shell.pak" ]
+  sources = [
+    "$target_gen_dir/electron_android.pak",
+  ]
+  renaming_sources = [ "$target_gen_dir/electron_android.pak" ]
+  renaming_destinations = [ "content_shell.pak" ]
+  
   disable_compression = true
   deps = [
-    "//content/shell:pak",
+    ":electron_android_pak",
     "//gin:v8_snapshot_assets",
     "//third_party/icu:icu_assets",
   ]

@@ -329,6 +329,12 @@ int ElectronBrowserMainParts::PreCreateThreads() {
 
   // Initialize the app locale for Electron and Chromium.
   std::string app_locale = l10n_util::GetApplicationLocale(loaded_locale);
+  
+  // TODO(android): GetApplicationLocale might return empty, use loaded_locale as fallback
+  if (app_locale.empty() && !loaded_locale.empty()) {
+    app_locale = loaded_locale;
+  }
+  
   ElectronBrowserClient::SetApplicationLocale(app_locale);
   fake_browser_process_->SetApplicationLocale(app_locale);
 

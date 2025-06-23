@@ -14,6 +14,9 @@
 #include "shell/common/gin_converters/content_converter.h"
 #include "shell/common/gin_converters/frame_converter.h"
 #include "shell/common/gin_helper/event.h"
+#include "base/unguessable_token.h"
+#include "third_party/blink/public/common/messaging/cloneable_message.h"
+#include "third_party/blink/public/mojom/messaging/cloneable_message.mojom.h"
 
 namespace electron {
 ElectronApiIPCHandlerImpl::ElectronApiIPCHandlerImpl(
@@ -66,9 +69,15 @@ void ElectronApiIPCHandlerImpl::Invoke(bool internal,
     return;
   session->Invoke(event, channel, std::move(arguments));
 #else
-  // On Android, we don't have Session API, so we can't process this
+  // TODO (android) we don't have Session API, so we can't process this
   if (callback) {
-    std::move(callback).Run(blink::CloneableMessage());
+    // Create a properly initialized empty message to avoid crash
+    blink::CloneableMessage reply;
+    // Set empty encoded message
+    reply.owned_encoded_message = std::vector<uint8_t>();
+    reply.encoded_message = base::span<const uint8_t>(reply.owned_encoded_message);
+    reply.sender_agent_cluster_id = base::UnguessableToken::Create();
+    std::move(callback).Run(std::move(reply));
   }
 #endif
 }
@@ -100,9 +109,15 @@ void ElectronApiIPCHandlerImpl::MessageSync(bool internal,
     return;
   session->MessageSync(event, channel, std::move(arguments));
 #else
-  // On Android, we don't have Session API, so we can't process this
+  // TODO (android) we don't have Session API, so we can't process this
   if (callback) {
-    std::move(callback).Run(blink::CloneableMessage());
+    // Create a properly initialized empty message to avoid crash
+    blink::CloneableMessage reply;
+    // Set empty encoded message
+    reply.owned_encoded_message = std::vector<uint8_t>();
+    reply.encoded_message = base::span<const uint8_t>(reply.owned_encoded_message);
+    reply.sender_agent_cluster_id = base::UnguessableToken::Create();
+    std::move(callback).Run(std::move(reply));
   }
 #endif
 }

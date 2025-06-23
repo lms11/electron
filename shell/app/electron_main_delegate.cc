@@ -261,6 +261,7 @@ void InitializeResourcesOnAndroid() {
 #endif
 
 std::string LoadResourceBundle(const std::string& locale) {
+  //FIXME (android) implement this
 #if !BUILDFLAG(IS_ANDROID)
   const bool initialized = ui::ResourceBundle::HasSharedInstance();
   DCHECK(!initialized);
@@ -281,7 +282,7 @@ std::string LoadResourceBundle(const std::string& locale) {
                              ui::kScaleFactorNone);
   return loaded_locale;
 #else
-  return "";
+  return "en-US";
 #endif
 }
 
@@ -358,9 +359,7 @@ std::optional<int> ElectronMainDelegate::BasicStartupComplete() {
 #endif
 
 #if BUILDFLAG(IS_ANDROID)
-  // TODO(android): We're still using Shell's path provider for resource loading.
-  // This should be replaced with Electron-specific path handling.
-  content::RegisterShellPathProvider();
+  // TODO(android): Do we need to do anything here?
 #endif
 
 #if IS_MAS_BUILD()
