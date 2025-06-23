@@ -20,7 +20,6 @@ generate_jni("electron_shell_jni_headers") {
 }
 
 shared_library_with_jni("libelectron_content_view") {
-  testonly = true
   deps = [
     ":electron_shell_jni_headers",
     "//components/crash/content/browser",
@@ -51,10 +50,11 @@ shared_library_with_jni("libelectron_content_view") {
     ":electron_apk",
     ":electron_shell_java",
   ]
+  add_stubs_for_missing_jni = true
+  remove_uncalled_jni = true
 }
 
 android_resources("electron_apk_resources") {
-  testonly = true
   sources = [
     "apk/res/drawable/ic_refresh.png",
     "apk/res/layout/electron_activity.xml",
@@ -69,7 +69,6 @@ android_resources("electron_apk_resources") {
 }
 
 android_library("electron_shell_java") {
-  testonly = true
   
   resources_package = "org.electronjs"
   deps = [
@@ -93,7 +92,6 @@ android_library("electron_shell_java") {
 }
 
 android_library("electron_apk_java") {
-  testonly = true
   
   resources_package = "org.electronjs.apk"
   deps = [
@@ -121,7 +119,6 @@ android_library("electron_apk_java") {
 }
 
 android_assets("electron_apk_assets") {
-  testonly = true
   sources = [
     "apk/assets/index.html",
     "apk/assets/renderer.js",
@@ -138,7 +135,6 @@ android_assets("electron_apk_assets") {
 
 # Repack English locale with Chrome platform settings for font support
 repack("electron_android_pak") {
-  testonly = true
   sources = [
     "$root_gen_dir/base/tracing/protos/tracing_proto_resources.pak",
     "$root_gen_dir/chrome/platform_locale_settings_en-US.pak",
@@ -178,7 +174,6 @@ repack("electron_android_pak") {
 }
 
 android_assets("electron_assets") {
-  testonly = true
   sources = [
     "$target_gen_dir/electron_android.pak",
   ]
@@ -192,14 +187,12 @@ android_assets("electron_assets") {
 }
 
 jinja_template("electron_manifest") {
-  testonly = true
   input = "apk/AndroidManifest.xml.jinja2"
   output = electron_manifest
   variables = [ "manifest_package=org.electronjs.apk" ]
 }
 
 android_apk("electron_apk") {
-  testonly = true
   apk_name = "Electron"
   android_manifest = electron_manifest
   android_manifest_dep = ":electron_manifest"
@@ -212,7 +205,6 @@ android_apk("electron_apk") {
     "//components/crash/core/app:chrome_crashpad_handler_named_as_so",
     "//components/metrics:metrics_java",
     "//content/public/android:content_java",
-    "//content/public/test/android:android_test_message_pump_support_java",
     "//media/capture/video/android:capture_java",
     "//net/android:net_java",
     "//services/shape_detection:shape_detection_java",
